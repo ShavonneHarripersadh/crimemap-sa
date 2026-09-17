@@ -3,15 +3,7 @@ import Link from "next/link";
 
 import { Note } from "@/components/ui/note";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
-import {
-  SOURCE_CITATION,
-  SOURCE_COVERAGE,
-  SOURCE_DISTRIBUTOR,
-  SOURCE_DOI_URL,
-  SOURCE_PRODUCER,
-  SOURCE_TITLE,
-  SOURCE_UNIT_OF_OBSERVATION,
-} from "@/lib/source";
+import { SOURCE_COVERAGE, SOURCE_PRODUCER, SOURCE_UNIT_OF_OBSERVATION } from "@/lib/source";
 
 export const metadata: Metadata = {
   title: "About CrimeMap SA",
@@ -57,22 +49,13 @@ export default function AboutPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Data source</h2>
+          <h2 className="text-lg font-semibold text-foreground">Where the figures come from</h2>
           <p>
-            {SOURCE_TITLE}. Produced by {SOURCE_PRODUCER} and distributed by {SOURCE_DISTRIBUTOR}.
-            Coverage: {SOURCE_COVERAGE} Unit of observation: {SOURCE_UNIT_OF_OBSERVATION}
+            CrimeMap SA shows crimes recorded by {SOURCE_PRODUCER}. Coverage: {SOURCE_COVERAGE}{" "}
+            Unit of observation: {SOURCE_UNIT_OF_OBSERVATION} The underlying records are not
+            offered for download from this site.
           </p>
-          <p className="text-xs leading-relaxed text-muted">{SOURCE_CITATION}</p>
           <p>
-            <a
-              href={SOURCE_DOI_URL}
-              className="text-accent underline decoration-dotted underline-offset-2"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Dataset record
-            </a>
-            {" · "}
             <Link
               href="/methodology"
               className="text-accent underline decoration-dotted underline-offset-2"

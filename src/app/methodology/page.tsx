@@ -6,7 +6,7 @@ import { Eyebrow, PageHeader } from "@/components/ui/section";
 import { FINANCIAL_YEAR_EXPLANATION } from "@/lib/crime/financial-year";
 import { HEADLINE_COMMUNITY_COLUMNS, POLICE_ACTION_COLUMNS } from "@/lib/crime/taxonomy";
 import { CHANGE_HIGHLIGHT_RULES, LOW_BASE_THRESHOLD } from "@/lib/metrics/change";
-import { SOURCE_CITATION, SOURCE_DOI_URL, SOURCE_TITLE } from "@/lib/source";
+import { SOURCE_PRODUCER } from "@/lib/source";
 
 export const metadata: Metadata = {
   title: "Methodology and calculations",
@@ -108,18 +108,11 @@ export default function MethodologyPage() {
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-foreground">Source</h2>
-          <p>{SOURCE_TITLE}</p>
-          <p className="text-xs leading-relaxed text-muted">{SOURCE_CITATION}</p>
           <p>
-            <a
-              href={SOURCE_DOI_URL}
-              className="text-accent underline decoration-dotted underline-offset-2"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Dataset record
-            </a>
-            {" · "}
+            Figures are crimes recorded by {SOURCE_PRODUCER}, organised by police station and
+            financial year. CrimeMap SA does not host or link to the underlying file.
+          </p>
+          <p>
             <Link
               href="/about"
               className="text-accent underline decoration-dotted underline-offset-2"

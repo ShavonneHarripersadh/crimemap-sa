@@ -1,6 +1,7 @@
 "use client";
 
 import L from "leaflet";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -126,9 +127,15 @@ export function CrimeMapView({
   const [clustered, setClustered] = useState(true);
   const [provinces, setProvinces] = useState<ProvinceChip[]>(PROVINCE_CHIPS);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
+  const filterKey = `${financialYear ?? ""}:${category}`;
+  const [activeFilter, setActiveFilter] = useState(filterKey);
 
   selectedRef.current = selected;
   filtersRef.current = { financialYear, category, categoryLabel };
+  if (filterKey !== activeFilter) {
+    setActiveFilter(filterKey);
+    setStatus("loading");
+  }
 
   const positionPopup = useCallback(() => {
     const map = mapRef.current;
@@ -196,9 +203,21 @@ export function CrimeMapView({
           feature.properties && "name" in feature.properties ? feature.properties.name : "",
         );
         const row = totals.get(municipalityKey(name));
-        featureLayer.on("mouseover", (event: L.LeafletMouseEvent) => {
-          (featureLayer as L.Path).setStyle({ weight: 2.2, color: "#1a1d24", fillOpacity: 0.9 });
+        const path = featureLayer as L.Path;
+        const showHover = (event: L.LeafletMouseEvent) => {
           const point = map.latLngToContainerPoint(event.latlng);
+          const key = `m:${name}`;
+          if (hoverRef.current === key) {
+            path.setStyle({ weight: 2.2, color: "#1a1d24", fillOpacity: 0.9 });
+            setHover((current) => (current ? { ...current, x: point.x, y: point.y } : current));
+            return;
+          }
+          if (hoverRef.current?.startsWith("m:")) {
+            layer.resetStyle();
+          }
+          path.setStyle({ weight: 2.2, color: "#1a1d24", fillOpacity: 0.9 });
+          path.bringToFront();
+          hoverRef.current = key;
           setHover({
             title: row?.label ?? name,
             detail: row
@@ -207,14 +226,17 @@ export function CrimeMapView({
             x: point.x,
             y: point.y,
           });
-        });
-        featureLayer.on("mousemove", (event: L.LeafletMouseEvent) => {
-          const point = map.latLngToContainerPoint(event.latlng);
-          setHover((current) => (current ? { ...current, x: point.x, y: point.y } : current));
-        });
-        featureLayer.on("mouseout", () => {
+        };
+        featureLayer.on("mouseover", showHover);
+        featureLayer.on("mousemove", showHover);
+        featureLayer.on("mouseout", (event: L.LeafletMouseEvent) => {
+          const next = event.originalEvent.relatedTarget;
+          if (next instanceof Element && next.closest(".leaflet-interactive")) return;
           layer.resetStyle(featureLayer);
-          setHover(null);
+          if (hoverRef.current === `m:${name}`) {
+            hoverRef.current = null;
+            setHover(null);
+          }
         });
         featureLayer.on("click", (event: L.LeafletMouseEvent) => {
           L.DomEvent.stopPropagation(event);
@@ -482,16 +504,30 @@ export function CrimeMapView({
     map.on("mousemove", (event: L.LeafletMouseEvent) => {
       const point = map.latLngToContainerPoint(event.latlng);
       const hit = overlay.hitTest(point);
-      container.style.cursor = hit ? "pointer" : "";
-      const key =
-        hit?.kind === "station"
-          ? `s:${hit.station.slug}`
-          : hit?.kind === "cluster"
-            ? `c:${hit.stations.length}:${hit.longitude.toFixed(3)}`
-            : null;
-      if (key === hoverRef.current) return;
-      hoverRef.current = key;
-      setHover(hit ? hoverFromHit(hit, point) : null);
+      if (hit) {
+        container.style.cursor = "pointer";
+        const key =
+          hit.kind === "station"
+            ? `s:${hit.station.slug}`
+            : `c:${hit.stations.length}:${hit.longitude.toFixed(3)}`;
+        if (key === hoverRef.current) {
+          setHover((current) => (current ? { ...current, x: point.x, y: point.y } : current));
+          return;
+        }
+        hoverRef.current = key;
+        setHover(hoverFromHit(hit, point));
+        return;
+      }
+      const overArea = event.originalEvent.target instanceof Element
+        && event.originalEvent.target.closest(".leaflet-interactive");
+      if (overArea) {
+        container.style.cursor = "pointer";
+        return;
+      }
+      container.style.cursor = "";
+      if (hoverRef.current === null) return;
+      hoverRef.current = null;
+      setHover(null);
     });
 
     map.on("mouseout", () => {
@@ -613,10 +649,18 @@ export function CrimeMapView({
           chrome ? null : "map-frame--compact",
         )}
         role="region"
+        aria-busy={status === "loading"}
         aria-label="Map of recorded crime by police station"
       >
         <div ref={containerRef} className="map-container" />
         <div ref={overlayHostRef} className="map-overlay-host" />
+
+        {status === "loading" ? (
+          <div className="map-loading" role="status" aria-live="polite">
+            <Loader2 className="size-8 animate-spin text-foreground" aria-hidden />
+            <span>Updating map</span>
+          </div>
+        ) : null}
 
         {hover && !selected ? (
           <div
@@ -644,27 +688,27 @@ export function CrimeMapView({
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute top-3 left-3 z-20 max-w-[16.5rem]">
-          <div className="rounded-lg border border-border bg-background/92 px-3 py-2.5 text-xs text-muted shadow-lg shadow-black/30 backdrop-blur">
-            <p className="font-medium text-foreground">
+        <div className="pointer-events-none absolute top-2 left-2 z-20 max-w-[11.5rem] sm:top-3 sm:left-3 sm:max-w-[16.5rem]">
+          <div className="rounded-lg border border-border bg-background/92 px-2.5 py-1.5 text-[0.6875rem] text-muted shadow-lg shadow-black/30 backdrop-blur sm:px-3 sm:py-2.5 sm:text-xs">
+            <p className="truncate font-medium text-foreground">
               {financialYear ?? "Recorded cases"} · {categoryLabel}
             </p>
-            <p className="tabular mt-1 text-lg font-semibold tracking-tight text-foreground">
+            <p className="tabular mt-0.5 text-base font-semibold tracking-tight text-foreground sm:mt-1 sm:text-lg">
               {status === "ready" ? formatCount(visibleTotal) : status === "loading" ? "…" : "—"}
             </p>
-            <p className="text-[0.6875rem] text-muted-strong">
+            <p className="hidden text-[0.6875rem] text-muted-strong sm:block">
               recorded cases
               {status === "ready" ? ` · ${visibleCount} station${visibleCount === 1 ? "" : "s"}` : ""}
             </p>
-            <div className="mt-2.5">
+            <div className="mt-1.5 sm:mt-2.5">
               <ColorRamp />
             </div>
-            <p className="mt-2 leading-snug">
+            <p className="mt-2 hidden leading-snug sm:block">
               {clustered
                 ? "Each shape is a local municipality. Green is fewer recorded cases, red is more. Colour is volume, not a safety score. Click an area to zoom in."
                 : "Each circle is one police station. Size is recorded cases in the selected year, not a rate or a safety score."}
             </p>
-            <p className="mt-2 text-[0.6875rem] text-muted-strong">
+            <p className="mt-1 text-[0.625rem] leading-snug text-muted-strong sm:mt-2 sm:text-[0.6875rem]">
               {status === "loading"
                 ? "Loading stations…"
                 : status === "error"
@@ -717,12 +761,12 @@ function JumpChip({
 function ColorRamp() {
   return (
     <div>
-      <div className="flex h-2 overflow-hidden rounded-full">
+      <div className="flex h-1.5 overflow-hidden rounded-full sm:h-2">
         {VOLUME_CLASS_COLORS.map((color) => (
           <span key={color} className="flex-1" style={{ background: color }} />
         ))}
       </div>
-      <div className="mt-1 flex justify-between text-[0.625rem] tracking-wide text-muted uppercase">
+      <div className="mt-1 hidden justify-between text-[0.625rem] tracking-wide text-muted uppercase sm:flex">
         <span>Fewer cases</span>
         <span>More cases</span>
       </div>

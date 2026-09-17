@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { SOURCE_CITATION, SOURCE_DOI_URL, SOURCE_TITLE } from "@/lib/source";
-
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-border bg-surface/40">
@@ -35,24 +33,18 @@ export function SiteFooter() {
             </li>
             <li>
               <Link href="/about" className="hover:text-foreground">
-                About and data sources
+                About
               </Link>
             </li>
           </ul>
         </nav>
 
         <div className="text-sm">
-          <p className="font-medium text-foreground">Data source</p>
-          <p className="mt-3 leading-relaxed text-muted">{SOURCE_TITLE}</p>
-          <p className="mt-3 text-xs leading-relaxed text-muted">{SOURCE_CITATION}</p>
-          <a
-            href={SOURCE_DOI_URL}
-            className="mt-3 inline-block text-xs text-accent underline decoration-dotted underline-offset-2"
-            rel="noreferrer"
-            target="_blank"
-          >
-            View the dataset record
-          </a>
+          <p className="font-medium text-foreground">Figures</p>
+          <p className="mt-3 leading-relaxed text-muted">
+            Counts of crimes recorded by the South African Police Service, shown by police station
+            and financial year. CrimeMap SA does not publish the underlying file.
+          </p>
         </div>
       </div>
 

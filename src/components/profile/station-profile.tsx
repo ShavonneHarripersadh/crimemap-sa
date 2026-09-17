@@ -23,7 +23,6 @@ import {
   totalChange,
 } from "@/lib/metrics/profile";
 import { calculateChange } from "@/lib/metrics/change";
-import { SOURCE_TITLE } from "@/lib/source";
 
 /**
  * Everything CrimeMap SA can say about one police station precinct.
@@ -208,13 +207,9 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
             recorded crime.
           </Note>
           <p className="text-xs leading-relaxed text-muted">
-            Source: {SOURCE_TITLE}.{" "}
+            Figures are crimes recorded by the South African Police Service.{" "}
             <Link href="/methodology" className="text-accent underline decoration-dotted">
               Read the full methodology
-            </Link>{" "}
-            or{" "}
-            <Link href="/about" className="text-accent underline decoration-dotted">
-              see the data source and citation
             </Link>
             .
           </p>

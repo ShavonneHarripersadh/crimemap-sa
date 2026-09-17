@@ -1,9 +1,7 @@
 /**
- * Attribution for the source dataset.
+ * Source metadata used in methodology copy.
  *
- * The distributor requires the citation below to be reproduced by anything that uses the data,
- * so it is kept in one place and rendered on every page through the footer, as well as in full
- * on /about and /methodology.
+ * Public pages name SAPS as the producer. They do not link to a distributor record or DOI.
  */
 
 export const SOURCE_TITLE =
