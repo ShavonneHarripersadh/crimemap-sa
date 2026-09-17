@@ -1,0 +1,76 @@
+{
+  "$comment": [
+    "Authoritative variable list for the CrimeMap SA source dataset.",
+    "Transcribed from the DataFirst data dictionary for data file 'sapacr-2005-2026-v1_4'.",
+    "Source: https://datafirst.uct.ac.za/dataportal/index.php/catalog/1012/data-dictionary/F1",
+    "DO NOT add variables to this file that are not present in the source dataset."
+  ],
+  "dataset": {
+    "id": "zar-saps-sapsacr-2005-2025-v1.4",
+    "data_file": "sapacr-2005-2026-v1_4",
+    "title": "South African Police Service Annual Crime Records 2005-2026",
+    "version": "1.4",
+    "producer": "South African Police Service (SAPS)",
+    "distributor": "DataFirst, University of Cape Town",
+    "catalogue_url": "https://datafirst.uct.ac.za/dataportal/index.php/catalog/1012",
+    "doi": "https://doi.org/10.25828/5MAW-4H90",
+    "licence": "Creative Commons CC-BY (Attribution)",
+    "expected_cases": 24206,
+    "expected_variables": 38,
+    "unit_of_observation": "police station x financial year"
+  },
+  "identifier_variables": [
+    { "name": "year", "label": "Fiscal Year", "type": "string", "required": true },
+    { "name": "station", "label": "Police station", "type": "string", "required": true }
+  ],
+  "geography_variables": [
+    { "name": "loc_mn", "label": "Local Municipality", "type": "string", "required": false },
+    { "name": "dc_mn", "label": "District Municipality", "type": "string", "required": false },
+    { "name": "longitude", "label": "Longitude coordinate", "type": "number", "required": false },
+    { "name": "latitude", "label": "Latitude coordinate", "type": "number", "required": false }
+  ],
+  "offence_variables": [
+    "other_theft",
+    "arson",
+    "assault_gbh",
+    "attempted_murder",
+    "attempted_sexoff",
+    "bank_robbery",
+    "burglary_nonres",
+    "burglary_res",
+    "carjacking",
+    "commercial_crime",
+    "common_assault",
+    "common_robbery",
+    "contact_sexoff",
+    "dui",
+    "drug_crime",
+    "illegal_firearms",
+    "kidnapping",
+    "malicious_damage",
+    "murder",
+    "rape",
+    "robbery_nonres",
+    "robbery_res",
+    "cash_transit_robbery",
+    "aggr_robbery",
+    "sexual_assault",
+    "sexual_offences",
+    "police_detected_sexoff",
+    "shoplifting",
+    "stock_theft",
+    "vehicle_theft",
+    "theft_from_vehicle",
+    "truck_hijacking"
+  ],
+  "not_present_in_source": {
+    "$comment": [
+      "Fields that the CrimeMap SA build specification anticipated but which the source dataset",
+      "does not contain. These are either derived (and disclosed as CrimeMap SA derivations) or dropped.",
+      "Recorded here so that no reader assumes they are source data."
+    ],
+    "province": "Not a source variable. Derived from dc_mn via data/reference/province_by_district.csv.",
+    "station_code": "Not a source variable. CrimeMap SA generates a deterministic slug from the station name.",
+    "sexual_offences_grouped_total": "Source provides sexual_offences; see crime_taxonomy.json for how nesting is handled."
+  }
+}

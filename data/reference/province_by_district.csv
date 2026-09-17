@@ -1,0 +1,92 @@
+# CrimeMap SA reference table: district municipality -> province.
+#
+# WHY THIS FILE EXISTS
+# The source dataset (DataFirst SAPS Annual Crime Records v1.4) has no province variable.
+# It provides dc_mn (district municipality) and loc_mn (local municipality) extracted from the
+# StatsSA Police District shapefile for Census 2022. Province is therefore a CrimeMap SA
+# derivation, disclosed as such on /methodology.
+#
+# HOW IT IS USED
+# The pipeline normalises both dc_mn and district_value below (lowercase, strip accents and
+# punctuation, drop the words district/metropolitan/municipality/dm/metro) before matching.
+# A district that does not match any row here is NOT guessed: province is left NULL and a
+# validation warning is recorded. Add the missing spelling to this file instead of guessing.
+#
+# South Africa has 8 metropolitan municipalities and 44 district municipalities (52 rows of
+# distinct districts). Additional rows are historical or alternative spellings of the same
+# district, marked in the note column.
+district_value,province_code,province_name,province_slug,note
+Buffalo City,EC,Eastern Cape,eastern-cape,metropolitan municipality
+Nelson Mandela Bay,EC,Eastern Cape,eastern-cape,metropolitan municipality
+Alfred Nzo,EC,Eastern Cape,eastern-cape,
+Amathole,EC,Eastern Cape,eastern-cape,
+Amatole,EC,Eastern Cape,eastern-cape,alternative spelling of Amathole
+Chris Hani,EC,Eastern Cape,eastern-cape,
+Joe Gqabi,EC,Eastern Cape,eastern-cape,
+Ukhahlamba,EC,Eastern Cape,eastern-cape,former name of Joe Gqabi
+OR Tambo,EC,Eastern Cape,eastern-cape,
+O.R. Tambo,EC,Eastern Cape,eastern-cape,alternative spelling of OR Tambo
+Oliver Tambo,EC,Eastern Cape,eastern-cape,alternative spelling of OR Tambo
+Sarah Baartman,EC,Eastern Cape,eastern-cape,
+Cacadu,EC,Eastern Cape,eastern-cape,former name of Sarah Baartman
+Mangaung,FS,Free State,free-state,metropolitan municipality
+Fezile Dabi,FS,Free State,free-state,
+Northern Free State,FS,Free State,free-state,former name of Fezile Dabi
+Lejweleputswa,FS,Free State,free-state,
+Thabo Mofutsanyana,FS,Free State,free-state,
+Thabo Mofutsanyane,FS,Free State,free-state,alternative spelling of Thabo Mofutsanyana
+Xhariep,FS,Free State,free-state,
+City of Johannesburg,GP,Gauteng,gauteng,metropolitan municipality
+Johannesburg,GP,Gauteng,gauteng,alternative spelling of City of Johannesburg
+City of Tshwane,GP,Gauteng,gauteng,metropolitan municipality
+Tshwane,GP,Gauteng,gauteng,alternative spelling of City of Tshwane
+Ekurhuleni,GP,Gauteng,gauteng,metropolitan municipality
+City of Ekurhuleni,GP,Gauteng,gauteng,alternative spelling of Ekurhuleni
+Sedibeng,GP,Gauteng,gauteng,
+West Rand,GP,Gauteng,gauteng,
+eThekwini,KZN,KwaZulu-Natal,kwazulu-natal,metropolitan municipality
+Amajuba,KZN,KwaZulu-Natal,kwazulu-natal,
+Harry Gwala,KZN,KwaZulu-Natal,kwazulu-natal,
+Sisonke,KZN,KwaZulu-Natal,kwazulu-natal,former name of Harry Gwala
+iLembe,KZN,KwaZulu-Natal,kwazulu-natal,
+King Cetshwayo,KZN,KwaZulu-Natal,kwazulu-natal,
+uThungulu,KZN,KwaZulu-Natal,kwazulu-natal,former name of King Cetshwayo
+Ugu,KZN,KwaZulu-Natal,kwazulu-natal,
+uMgungundlovu,KZN,KwaZulu-Natal,kwazulu-natal,
+uMkhanyakude,KZN,KwaZulu-Natal,kwazulu-natal,
+uMzinyathi,KZN,KwaZulu-Natal,kwazulu-natal,
+uThukela,KZN,KwaZulu-Natal,kwazulu-natal,
+Zululand,KZN,KwaZulu-Natal,kwazulu-natal,
+Capricorn,LP,Limpopo,limpopo,
+Mopani,LP,Limpopo,limpopo,
+Sekhukhune,LP,Limpopo,limpopo,
+Greater Sekhukhune,LP,Limpopo,limpopo,alternative spelling of Sekhukhune
+Vhembe,LP,Limpopo,limpopo,
+Waterberg,LP,Limpopo,limpopo,
+Ehlanzeni,MP,Mpumalanga,mpumalanga,
+Gert Sibande,MP,Mpumalanga,mpumalanga,
+Nkangala,MP,Mpumalanga,mpumalanga,
+Bojanala Platinum,NW,North West,north-west,
+Bojanala,NW,North West,north-west,alternative spelling of Bojanala Platinum
+Dr Kenneth Kaunda,NW,North West,north-west,
+Dr Ruth Segomotsi Mompati,NW,North West,north-west,
+Bophirima,NW,North West,north-west,former name of Dr Ruth Segomotsi Mompati
+Ngaka Modiri Molema,NW,North West,north-west,
+Frances Baard,NC,Northern Cape,northern-cape,
+John Taolo Gaetsewe,NC,Northern Cape,northern-cape,
+Kgalagadi,NC,Northern Cape,northern-cape,former name of John Taolo Gaetsewe
+Namakwa,NC,Northern Cape,northern-cape,
+Namaqualand,NC,Northern Cape,northern-cape,alternative spelling of Namakwa
+Pixley ka Seme,NC,Northern Cape,northern-cape,district municipality in the Northern Cape
+ZF Mgcawu,NC,Northern Cape,northern-cape,
+Z F Mgcawu,NC,Northern Cape,northern-cape,alternative spelling of ZF Mgcawu
+Siyanda,NC,Northern Cape,northern-cape,former name of ZF Mgcawu
+City of Cape Town,WC,Western Cape,western-cape,metropolitan municipality
+Cape Town,WC,Western Cape,western-cape,alternative spelling of City of Cape Town
+Cape Winelands,WC,Western Cape,western-cape,
+Boland,WC,Western Cape,western-cape,former name of Cape Winelands
+Central Karoo,WC,Western Cape,western-cape,
+Garden Route,WC,Western Cape,western-cape,
+Eden,WC,Western Cape,western-cape,former name of Garden Route
+Overberg,WC,Western Cape,western-cape,
+West Coast,WC,Western Cape,western-cape,

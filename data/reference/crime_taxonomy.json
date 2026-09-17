@@ -1,0 +1,454 @@
+{
+  "$comment": [
+    "Single source of truth for how CrimeMap SA groups the source offence variables.",
+    "Consumed by BOTH the Python pipeline (scripts/) and the TypeScript app (src/lib/crime/).",
+    "Every 'name' below is a real column in the source dataset - see source_schema.json.",
+    "",
+    "The grouping follows the South African Police Service's own published structure:",
+    "17 community-reported serious crimes in four groups (contact, contact-related,",
+    "property-related, other serious), plus crimes detected as a result of police action.",
+    "Reference: SAPS crime statistics releases, e.g.",
+    "https://www.saps.gov.za/services/downloads/2024/2024-2025_Q4_crime_stats.pdf",
+    "",
+    "IMPORTANT: some source columns are TOTALS that already contain other columns.",
+    "'aggr_robbery' contains its six subcategories and 'sexual_offences' contains its four.",
+    "Summing every column would double count. Only role='headline' rows enter group totals."
+  ],
+  "roles": {
+    "headline": "One of the 17 community-reported serious crimes or the 4 police-detected crimes. Enters group totals.",
+    "subcategory": "A published breakdown of a headline category. Already included in its parent. Never added to totals.",
+    "standalone": "Present in the source but not part of the 17 or the 4. Reported on its own, never added to totals."
+  },
+  "groups": {
+    "contact": {
+      "label": "Contact crime",
+      "description": "Crimes in which the victim is the target of violence or the threat of violence.",
+      "in_17_community_reported": true
+    },
+    "contact_related": {
+      "label": "Contact-related crime",
+      "description": "Violent crimes committed against property with intent to damage or destroy it.",
+      "in_17_community_reported": true
+    },
+    "property_related": {
+      "label": "Property-related crime",
+      "description": "Crimes targeting property where the victim is not present.",
+      "in_17_community_reported": true
+    },
+    "other_serious": {
+      "label": "Other serious crime",
+      "description": "All theft not mentioned elsewhere, commercial crime and shoplifting.",
+      "in_17_community_reported": true
+    },
+    "police_action": {
+      "label": "Crime detected as a result of police action",
+      "description": "Crime typically recorded after police deployment or intelligence rather than public reporting.",
+      "in_17_community_reported": false
+    },
+    "unclassified": {
+      "label": "Other recorded crime",
+      "description": "Recorded in the source dataset but not part of the 17 community-reported serious crimes or the 4 crimes detected as a result of police action.",
+      "in_17_community_reported": false
+    }
+  },
+  "categories": [
+    {
+      "name": "murder",
+      "label": "Murder",
+      "short_label": "Murder",
+      "source_label": "Murder cases",
+      "group": "contact",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "attempted_murder",
+      "label": "Attempted murder",
+      "short_label": "Attempted murder",
+      "source_label": "Attempted murder cases",
+      "group": "contact",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "sexual_offences",
+      "label": "Sexual offences",
+      "short_label": "Sexual offences",
+      "source_label": "Other sexual offences",
+      "group": "contact",
+      "role": "headline",
+      "parent": null,
+      "note": "SAPS publishes 'Sexual offences' as one of the 17 community-reported serious crimes, broken down into rape, sexual assault, attempted sexual offences and contact sexual offences. VERIFIED AGAINST v1.4 (24,206 rows): this column equals the sum of those four breakdown columns in 2023/24 onwards (3,517 of 3,518 rows) but not before, where it is consistently smaller than that sum and matches no stable subset. It is also entirely absent for 2005/06 to 2007/08. CrimeMap SA therefore uses this column as the sexual offences figure and never sums the breakdown columns into a total, so the breakdown's inconsistency in earlier years cannot distort any total."
+    },
+    {
+      "name": "assault_gbh",
+      "label": "Assault with intent to inflict grievous bodily harm",
+      "short_label": "Assault (GBH)",
+      "source_label": "Assault with grievous bodily harm",
+      "group": "contact",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "common_assault",
+      "label": "Common assault",
+      "short_label": "Common assault",
+      "source_label": "Common assault cases",
+      "group": "contact",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "common_robbery",
+      "label": "Common robbery",
+      "short_label": "Common robbery",
+      "source_label": "Common robbery cases",
+      "group": "contact",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "aggr_robbery",
+      "label": "Robbery with aggravating circumstances",
+      "short_label": "Aggravated robbery",
+      "source_label": "Robbery with aggravating circumstances",
+      "group": "contact",
+      "role": "headline",
+      "parent": null,
+      "note": "Contains the six subcategories below, but is larger than their sum because SAPS publishes them as only SOME subcategories of aggravated robbery: street robbery and other aggravated robberies are inside this total without a separate column. VERIFIED AGAINST v1.4: this column is greater than or equal to the sum of the six in 24,196 of 24,206 rows. The pipeline therefore tests containment rather than equality, and the ten rows that breach it are reported."
+    },
+    {
+      "name": "carjacking",
+      "label": "Carjacking",
+      "short_label": "Carjacking",
+      "source_label": "Carjacking incidents",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "robbery_res",
+      "label": "Robbery at residential premises",
+      "short_label": "Robbery (residential)",
+      "source_label": "Robbery at residential premises",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "robbery_nonres",
+      "label": "Robbery at non-residential premises",
+      "short_label": "Robbery (non-residential)",
+      "source_label": "Robbery at non-residential premises",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "cash_transit_robbery",
+      "label": "Robbery of cash in transit",
+      "short_label": "Cash-in-transit robbery",
+      "source_label": "Robbery of cash in transit",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "bank_robbery",
+      "label": "Bank robbery",
+      "short_label": "Bank robbery",
+      "source_label": "Bank robbery cases",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "truck_hijacking",
+      "label": "Truck hijacking",
+      "short_label": "Truck hijacking",
+      "source_label": "Truck hijacking incidents",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "aggr_robbery"
+    },
+    {
+      "name": "rape",
+      "label": "Rape",
+      "short_label": "Rape",
+      "source_label": "Rape",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "sexual_offences"
+    },
+    {
+      "name": "sexual_assault",
+      "label": "Sexual assault",
+      "short_label": "Sexual assault",
+      "source_label": "Sexual assault cases",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "sexual_offences"
+    },
+    {
+      "name": "attempted_sexoff",
+      "label": "Attempted sexual offences",
+      "short_label": "Attempted sexual offences",
+      "source_label": "Attempted sexual offences",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "sexual_offences"
+    },
+    {
+      "name": "contact_sexoff",
+      "label": "Contact sexual offences",
+      "short_label": "Contact sexual offences",
+      "source_label": "Contact sexual offences",
+      "group": "contact",
+      "role": "subcategory",
+      "parent": "sexual_offences"
+    },
+    {
+      "name": "arson",
+      "label": "Arson",
+      "short_label": "Arson",
+      "source_label": "Arson cases",
+      "group": "contact_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "malicious_damage",
+      "label": "Malicious damage to property",
+      "short_label": "Malicious damage to property",
+      "source_label": "Malicious damage to property",
+      "group": "contact_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "burglary_res",
+      "label": "Burglary at residential premises",
+      "short_label": "Residential burglary",
+      "source_label": "Burglary at residential premises",
+      "group": "property_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "burglary_nonres",
+      "label": "Burglary at non-residential premises",
+      "short_label": "Non-residential burglary",
+      "source_label": "Burglary at non-residential premises",
+      "group": "property_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "vehicle_theft",
+      "label": "Theft of motor vehicle and motorcycle",
+      "short_label": "Vehicle theft",
+      "source_label": "Motor vehicle theft",
+      "group": "property_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "theft_from_vehicle",
+      "label": "Theft out of or from motor vehicle",
+      "short_label": "Theft from vehicle",
+      "source_label": "Theft out of or from motor vehicle",
+      "group": "property_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "stock_theft",
+      "label": "Stock-theft",
+      "short_label": "Stock theft",
+      "source_label": "Stock theft cases",
+      "group": "property_related",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "other_theft",
+      "label": "All theft not mentioned elsewhere",
+      "short_label": "Other theft",
+      "source_label": "Other theft not including vehicle and stock theft",
+      "group": "other_serious",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "commercial_crime",
+      "label": "Commercial crime",
+      "short_label": "Commercial crime",
+      "source_label": "Commercial crime cases",
+      "group": "other_serious",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "shoplifting",
+      "label": "Shoplifting",
+      "short_label": "Shoplifting",
+      "source_label": "Shoplifting cases",
+      "group": "other_serious",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "illegal_firearms",
+      "label": "Illegal possession of firearms and ammunition",
+      "short_label": "Illegal firearms",
+      "source_label": "Illegal possession of firearms and ammunition",
+      "group": "police_action",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "drug_crime",
+      "label": "Drug-related crime",
+      "short_label": "Drug-related crime",
+      "source_label": "Drug-related crime",
+      "group": "police_action",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "dui",
+      "label": "Driving under the influence of alcohol or drugs",
+      "short_label": "Driving under the influence",
+      "source_label": "Driving under influence of alcohol (DUI)",
+      "group": "police_action",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "police_detected_sexoff",
+      "label": "Sexual offences detected as a result of police action",
+      "short_label": "Sexual offences (police detected)",
+      "source_label": "Sexual offences detected by police",
+      "group": "police_action",
+      "role": "headline",
+      "parent": null
+    },
+    {
+      "name": "kidnapping",
+      "label": "Kidnapping",
+      "short_label": "Kidnapping",
+      "source_label": "Kidnapping",
+      "group": "unclassified",
+      "role": "standalone",
+      "parent": null,
+      "note": "Present in the source dataset but not one of the 17 community-reported serious crimes or the 4 crimes detected as a result of police action. Reported on its own and excluded from every total."
+    }
+  ],
+  "aggregates": {
+    "contact_crime_total": {
+      "label": "Contact crime",
+      "definition": "Sum of the headline contact crime categories: murder, attempted murder, sexual offences, assault with intent to inflict grievous bodily harm, common assault, common robbery and robbery with aggravating circumstances. Subcategories are excluded because they are already contained in their parent."
+    },
+    "contact_related_total": {
+      "label": "Contact-related crime",
+      "definition": "Sum of arson and malicious damage to property."
+    },
+    "property_crime_total": {
+      "label": "Property-related crime",
+      "definition": "Sum of burglary at residential premises, burglary at non-residential premises, theft of motor vehicle and motorcycle, theft out of or from motor vehicle and stock-theft."
+    },
+    "other_serious_total": {
+      "label": "Other serious crime",
+      "definition": "Sum of all theft not mentioned elsewhere, commercial crime and shoplifting."
+    },
+    "police_action_total": {
+      "label": "Crime detected as a result of police action",
+      "definition": "Sum of illegal possession of firearms and ammunition, drug-related crime, driving under the influence of alcohol or drugs, and sexual offences detected as a result of police action."
+    },
+    "total_recorded_crime": {
+      "label": "Recorded crime (17 community-reported serious crimes)",
+      "definition": "Sum of contact crime, contact-related crime, property-related crime and other serious crime. This matches the SAPS headline '17 community reported serious crime' aggregate. It excludes crimes detected as a result of police action and excludes kidnapping.",
+      "components": [
+        "contact_crime_total",
+        "contact_related_total",
+        "property_crime_total",
+        "other_serious_total"
+      ]
+    },
+    "total_including_police_action": {
+      "label": "Recorded crime including crimes detected by police action",
+      "definition": "total_recorded_crime plus police_action_total. Reported separately because crimes detected as a result of police action reflect police activity rather than public reporting, so mixing them into a single headline figure would be misleading."
+    }
+  },
+  "featured_series": {
+    "$comment": "Category options offered in the trend chart. Composite options are CrimeMap SA groupings and are labelled as such in the UI.",
+    "all": {
+      "label": "All crime",
+      "columns": ["__total_recorded_crime__"],
+      "composite": false,
+      "definition": "The total_recorded_crime aggregate."
+    },
+    "murder": {
+      "label": "Murder",
+      "columns": ["murder"],
+      "composite": false,
+      "definition": "The source murder column."
+    },
+    "robbery": {
+      "label": "Robbery",
+      "columns": ["aggr_robbery", "common_robbery"],
+      "composite": true,
+      "definition": "CrimeMap SA grouping: robbery with aggravating circumstances plus common robbery."
+    },
+    "burglary": {
+      "label": "Burglary",
+      "columns": ["burglary_res", "burglary_nonres"],
+      "composite": true,
+      "definition": "CrimeMap SA grouping: burglary at residential premises plus burglary at non-residential premises."
+    },
+    "vehicle_theft": {
+      "label": "Vehicle theft",
+      "columns": ["vehicle_theft"],
+      "composite": false,
+      "definition": "The source theft of motor vehicle and motorcycle column."
+    },
+    "assault": {
+      "label": "Assault",
+      "columns": ["assault_gbh", "common_assault"],
+      "composite": true,
+      "definition": "CrimeMap SA grouping: assault with intent to inflict grievous bodily harm plus common assault."
+    },
+    "sexual_offences": {
+      "label": "Sexual offences",
+      "columns": ["sexual_offences"],
+      "composite": false,
+      "definition": "The source sexual offences column."
+    }
+  },
+  "consistency_checks": [
+    {
+      "id": "aggr_robbery_subcategories",
+      "total": "aggr_robbery",
+      "parts": [
+        "carjacking",
+        "robbery_res",
+        "robbery_nonres",
+        "cash_transit_robbery",
+        "bank_robbery",
+        "truck_hijacking"
+      ],
+      "mode": "contains",
+      "severity": "warning",
+      "description": "Robbery with aggravating circumstances must be at least the sum of the six published subcategories, because those are only some of its subcategories. A total smaller than the sum of its own parts cannot be correct and is reported. Neither value is altered."
+    },
+    {
+      "id": "sexual_offences_subcategories",
+      "total": "sexual_offences",
+      "parts": ["rape", "sexual_assault", "attempted_sexoff", "contact_sexoff"],
+      "mode": "equals",
+      "applies_from_financial_year_start": 2023,
+      "severity": "warning",
+      "description": "From 2023/24 the source's sexual offences column equals the sum of its four breakdown columns, so a mismatch from that year onwards is reported. Earlier years are excluded from this check because the source itself does not maintain that relationship; that inconsistency is described on the methodology page rather than corrected."
+    }
+  ]
+}
