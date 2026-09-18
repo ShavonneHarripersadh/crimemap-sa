@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s — CrimeMap SA",
   },
   description:
-    "Explore recorded crime statistics published by the South African Police Service by police station, municipality and province. Trends since 2005/06, category breakdowns and area comparisons.",
+    "South African crime statistics from SAPS, by police station, municipality and province. Maps, trends since 2005/06, category breakdowns and area comparisons.",
   applicationName: "CrimeMap SA",
   openGraph: {
     type: "website",
@@ -43,6 +43,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "CrimeMap SA",
+              url: siteUrl("/"),
+              description:
+                "South African recorded crime statistics from the South African Police Service, by police station.",
+            }),
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col">
         <a
