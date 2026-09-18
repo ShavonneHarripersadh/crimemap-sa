@@ -53,7 +53,7 @@ export function CategoriesMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute top-full right-0 z-50 mt-1 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border-strong bg-surface-raised shadow-panel sm:right-auto sm:left-0"
+          className="z-50 mt-1 overflow-hidden rounded-xl border border-border-strong bg-surface-raised shadow-panel max-sm:fixed max-sm:inset-x-4 max-sm:top-16 sm:absolute sm:top-full sm:left-0 sm:w-72"
         >
           <Link
             href="/crime-category"
@@ -63,7 +63,7 @@ export function CategoriesMenu({
           >
             All categories
           </Link>
-          <ul className="max-h-80 overflow-y-auto py-1">
+          <ul className="max-h-[min(20rem,calc(100dvh-6rem))] overflow-y-auto py-1">
             {items.map((item) => (
               <li key={item.href}>
                 <Link
