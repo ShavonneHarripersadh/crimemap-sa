@@ -3,37 +3,83 @@
 /**
  * CrimeMap SA visual language.
  *
- * Dark, editorial and data-forward. The palette is deliberately narrow: one accent for
+ * Light-first, editorial and data-forward. The palette is deliberately narrow: one accent for
  * interactive elements, and a warm/cool pair reserved exclusively for the direction of a
  * change. Direction is never carried by colour alone; every figure is paired with an arrow
  * and a word, which WCAG 2.1 AA requires.
+ *
+ * Dark is an explicit user choice, applied via the .dark class on <html>.
  */
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #08090c;
-  --surface: #0e1015;
-  --surface-raised: #14171e;
-  --surface-hover: #1a1e27;
-  --border: #232833;
-  --border-strong: #333a49;
+  color-scheme: light;
 
-  --foreground: #f2f4f8;
-  --muted: #9aa3b2;
-  --muted-strong: #c3cad6;
+  --background: #fff6e8;
+  --surface: #fffaf1;
+  --surface-raised: #ffffff;
+  --surface-hover: #f3e6d2;
+  --border: #ead7b8;
+  --border-strong: #d4b888;
 
-  --accent: #4da3ff;
-  --accent-foreground: #04121f;
-  --accent-muted: #16324d;
+  --foreground: #1c140c;
+  --muted: #6a5340;
+  --muted-strong: #3e2f22;
 
-  /* Reserved for the direction of a change only. */
-  --increase: #ff9f6b;
-  --increase-surface: #2a1a12;
-  --decrease: #58d1b4;
-  --decrease-surface: #10241f;
-  --neutral: #8b95a6;
+  --accent: #0b7c78;
+  --accent-foreground: #ffffff;
+  --accent-muted: #d3efec;
+  --mark: #e8a117;
 
-  --focus: #7dbcff;
+  --increase: #d9480f;
+  --increase-surface: #fde8dc;
+  --decrease: #148a5a;
+  --decrease-surface: #ddf4e8;
+  --neutral: #6a5340;
+
+  --focus: #0b7c78;
   --radius: 0.625rem;
+  --shadow: 0 12px 32px color-mix(in srgb, var(--foreground) 12%, transparent);
+  --scrim: color-mix(in srgb, var(--background) 62%, transparent);
+  --control-fill: color-mix(in srgb, var(--surface-raised) 88%, transparent);
+  --hero-a: color-mix(in srgb, var(--mark) 22%, transparent);
+  --hero-b: color-mix(in srgb, var(--accent) 16%, transparent);
+  --grid-line: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #121a1c;
+  --surface: #182224;
+  --surface-raised: #1f2b2e;
+  --surface-hover: #273538;
+  --border: #314246;
+  --border-strong: #456064;
+
+  --foreground: #f6efe4;
+  --muted: #b7c4c2;
+  --muted-strong: #d7e0de;
+
+  --accent: #3ecfc6;
+  --accent-foreground: #062422;
+  --accent-muted: #1a3f3d;
+  --mark: #f0b429;
+
+  --increase: #ff9a62;
+  --increase-surface: #3a2218;
+  --decrease: #5ed7a8;
+  --decrease-surface: #123328;
+  --neutral: #9aa8a6;
+
+  --focus: #3ecfc6;
+  --shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  --scrim: rgb(18 26 28 / 0.45);
+  --control-fill: rgb(18 26 28 / 0.82);
+  --hero-a: rgb(240 180 41 / 0.14);
+  --hero-b: rgb(62 207 198 / 0.12);
+  --grid-line: rgb(255 255 255 / 0.05);
 }
 
 @theme inline {
@@ -50,6 +96,7 @@
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-mark: var(--mark);
 
   --color-increase: var(--increase);
   --color-increase-surface: var(--increase-surface);
@@ -64,10 +111,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-panel: var(--shadow);
 }
 
 * {
   border-color: var(--border);
+}
+
+html {
+  background: var(--background);
 }
 
 body {
@@ -92,14 +145,14 @@ body {
 /* A restrained backdrop for hero sections: a soft radial wash rather than a gradient slab. */
 .hero-wash {
   background-image:
-    radial-gradient(60rem 30rem at 15% -10%, rgba(77, 163, 255, 0.1), transparent 70%),
-    radial-gradient(45rem 25rem at 90% 0%, rgba(88, 209, 180, 0.06), transparent 70%);
+    radial-gradient(60rem 30rem at 15% -10%, var(--hero-a), transparent 70%),
+    radial-gradient(45rem 25rem at 90% 0%, var(--hero-b), transparent 70%);
 }
 
 .grid-lines {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 3rem 3rem;
 }
 
@@ -142,7 +195,7 @@ body {
 }
 
 .leaflet-control-attribution {
-  background: rgba(8, 9, 12, 0.8) !important;
+  background: var(--control-fill) !important;
   color: var(--muted) !important;
 }
 
@@ -151,7 +204,7 @@ body {
 }
 
 .leaflet-control-scale-line {
-  background: rgba(8, 9, 12, 0.75) !important;
+  background: var(--control-fill) !important;
   color: var(--foreground) !important;
   border-color: var(--border) !important;
 }
@@ -218,7 +271,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: rgba(8, 9, 12, 0.35);
+  background: var(--scrim);
   color: var(--foreground);
   font-size: 0.875rem;
   pointer-events: none;

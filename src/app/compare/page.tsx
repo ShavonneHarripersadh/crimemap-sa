@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ComparePicker } from "@/components/compare/compare-picker";
 import { CompareTable } from "@/components/compare/compare-table";
+import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { Note } from "@/components/ui/note";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
@@ -79,6 +80,8 @@ export default async function ComparePage({
       </PageHeader>
 
       <ComparePicker selected={selected} />
+
+      {result.data.length >= 2 ? <TrackOnMount event="comparison_viewed" /> : null}
 
       <div className="mt-8">
         <CompareTable profiles={result.data} />

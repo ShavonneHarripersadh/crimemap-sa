@@ -182,7 +182,7 @@ export function SearchBox({
       </span>
 
       {showList ? (
-        <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border-strong bg-surface-raised shadow-2xl shadow-black/60">
+        <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border-strong bg-surface-raised shadow-panel">
           <ul id={listboxId} role="listbox" aria-label="Search suggestions" className="max-h-80 overflow-y-auto">
             {error ? (
               <li className="px-4 py-3 text-sm text-muted">{error}</li>

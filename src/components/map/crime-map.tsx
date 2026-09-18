@@ -32,6 +32,7 @@ export function CrimeMap({
   className?: string;
   chrome?: boolean;
   focus?: { slug: string; longitude: number; latitude: number } | null;
+  metric?: "volume" | "yoy";
 }) {
   return (
     <div className={cn(className)}>

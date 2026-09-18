@@ -198,4 +198,52 @@ export function getFeaturedSeries(key: string): FeaturedSeries | undefined {
   return FEATURED_SERIES.find((s) => s.key === key);
 }
 
+/**
+ * Featured-series key that best represents a source column on charts and category pages.
+ * Headline totals stay on "all"; a column that belongs to a CrimeMap SA grouping (robbery,
+ * burglary, assault) maps to that grouping rather than to a single source column.
+ */
+export function featuredSeriesKeyForColumn(column: string): string {
+  if (column === "total_recorded_crime") return "all";
+  const grouped = FEATURED_SERIES.find(
+    (series) =>
+      series.key !== "all" &&
+      !series.columns.includes(TOTAL_SERIES_TOKEN) &&
+      series.columns.includes(column),
+  );
+  if (grouped) return grouped.key;
+  if (FEATURED_SERIES.some((series) => series.key === column)) return column;
+  return "all";
+}
+
+/**
+ * Categories with a dedicated deep-dive page: featured groupings plus any headline source
+ * column that is not already covered by a grouping.
+ */
+export function explorableCategories(): FeaturedSeries[] {
+  const featured = FEATURED_SERIES.filter((series) => series.key !== "all");
+  const covered = new Set(featured.flatMap((series) => series.columns));
+  const extras: FeaturedSeries[] = HEADLINE_COMMUNITY_COLUMNS.filter(
+    (column) => !covered.has(column),
+  ).flatMap((column) => {
+    const category = getCategory(column);
+    if (!category) return [];
+    return [
+      {
+        key: column,
+        label: category.shortLabel,
+        columns: [column],
+        composite: false,
+        definition: `Cases the source records as ${category.label.toLowerCase()}.`,
+      },
+    ];
+  });
+
+  return [...featured, ...extras];
+}
+
+export function getExplorableCategory(slug: string): FeaturedSeries | undefined {
+  return explorableCategories().find((series) => series.key === slug);
+}
+
 export const CONSISTENCY_CHECKS = raw.consistency_checks;

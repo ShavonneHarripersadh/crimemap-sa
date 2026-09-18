@@ -1,13 +1,17 @@
 import Link from "next/link";
 
+import { CompareTrendChart } from "@/components/compare/compare-trend-chart";
 import { ChangeIndicator } from "@/components/data/change-indicator";
 import { Card } from "@/components/ui/card";
 import { Note } from "@/components/ui/note";
+import { Section } from "@/components/ui/section";
 import { HEADLINE_COMMUNITY_COLUMNS, categoryLabel } from "@/lib/crime/taxonomy";
 import type { StationProfile } from "@/lib/data/stations";
 import { formatCount } from "@/lib/format";
 import { calculateChange } from "@/lib/metrics/change";
+import { buildHistoricalContext, totalSeries } from "@/lib/metrics/history";
 import {
+  buildBreakdown,
   buildYearTotals,
   fiveYearChange,
   totalChange,
@@ -37,6 +41,9 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
     const totals = latest ? buildYearTotals(latest) : null;
     const change = latest ? totalChange(latest, previous) : null;
     const fiveYear = latest ? fiveYearChange(ordered, latest.financialYearStart) : null;
+    const series = totalSeries(ordered);
+    const historical = buildHistoricalContext(series);
+    const breakdown = latest ? buildBreakdown(latest).slice(0, 8) : [];
 
     return {
       profile,
@@ -45,6 +52,9 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
       totals,
       change,
       fiveYear,
+      series,
+      historical,
+      breakdown,
     };
   });
 
@@ -115,6 +125,42 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
                 </td>
               ))}
             </tr>
+            <tr className="border-b border-border">
+              <th className="px-5 py-3 text-left font-medium text-muted-strong">5-year average</th>
+              {columns.map(({ profile, historical }) => (
+                <td key={profile.station.slug} className="tabular px-5 py-3">
+                  {formatCount(historical.fiveYear.average)}
+                </td>
+              ))}
+            </tr>
+            <tr className="border-b border-border">
+              <th className="px-5 py-3 text-left font-medium text-muted-strong">10-year average</th>
+              {columns.map(({ profile, historical }) => (
+                <td key={profile.station.slug} className="tabular px-5 py-3">
+                  {formatCount(historical.tenYear.average)}
+                </td>
+              ))}
+            </tr>
+            <tr className="border-b border-border">
+              <th className="px-5 py-3 text-left font-medium text-muted-strong">Historical high</th>
+              {columns.map(({ profile, historical }) => (
+                <td key={profile.station.slug} className="px-5 py-3">
+                  {historical.extremes.high
+                    ? `${formatCount(historical.extremes.high.value)} · ${historical.extremes.high.financialYear}`
+                    : "Not available"}
+                </td>
+              ))}
+            </tr>
+            <tr className="border-b border-border">
+              <th className="px-5 py-3 text-left font-medium text-muted-strong">Historical low</th>
+              {columns.map(({ profile, historical }) => (
+                <td key={profile.station.slug} className="px-5 py-3">
+                  {historical.extremes.low
+                    ? `${formatCount(historical.extremes.low.value)} · ${historical.extremes.low.financialYear}`
+                    : "Not available"}
+                </td>
+              ))}
+            </tr>
             {HEADLINE_COMMUNITY_COLUMNS.map((column) => (
               <tr key={column} className="border-b border-border last:border-b-0">
                 <th className="px-5 py-3 text-left font-medium text-muted-strong">
@@ -139,6 +185,65 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
           </tbody>
         </table>
       </Card>
+
+      {columns.length >= 2 ? (
+        <Section
+          title="Five-year trend"
+          description="Headline recorded crime for each precinct, last five financial years. The lines are not a ranking."
+        >
+          <CompareTrendChart
+            series={columns.map(({ profile, series }) => ({
+              key: profile.station.slug,
+              label: profile.station.name,
+              points: series.slice(-5).map((point) => ({
+                financialYear: point.financialYear,
+                value: point.value,
+              })),
+            }))}
+          />
+        </Section>
+      ) : null}
+
+      {columns.length >= 2 ? (
+        <Section
+          title="Crime profile"
+          description="Share of the latest-year total for the largest categories. Composition, not a safety comparison."
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="py-3 pr-4 font-medium text-muted">Category</th>
+                  {columns.map(({ profile }) => (
+                    <th key={profile.station.slug} className="py-3 pr-4 font-medium text-muted">
+                      {profile.station.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {HEADLINE_COMMUNITY_COLUMNS.slice(0, 8).map((column) => (
+                  <tr key={column} className="border-b border-border last:border-b-0">
+                    <th className="py-3 pr-4 text-left font-medium text-muted-strong">
+                      {categoryLabel(column)}
+                    </th>
+                    {columns.map(({ profile, breakdown }) => {
+                      const row = breakdown.find((item) => item.column === column);
+                      return (
+                        <td key={profile.station.slug} className="tabular py-3 pr-4">
+                          {row?.shareOfTotal === null || row?.shareOfTotal === undefined
+                            ? "—"
+                            : `${row.shareOfTotal.toFixed(0)}%`}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      ) : null}
 
       <Note>
         These are recorded counts, not rates per person. A larger total usually reflects a larger

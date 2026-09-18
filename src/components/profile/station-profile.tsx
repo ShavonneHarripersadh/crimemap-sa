@@ -1,37 +1,52 @@
 import Link from "next/link";
 
-import { CategoryBreakdown } from "@/components/charts/category-breakdown";
 import { ChangeIndicator } from "@/components/data/change-indicator";
 import { StatCard } from "@/components/data/stat-card";
 import { WhatsChanging } from "@/components/data/whats-changing";
 import { CrimeMap } from "@/components/map/crime-map";
-import { StationTrend } from "@/components/profile/station-trend";
+import { AreaInsights } from "@/components/profile/area-insights";
+import { AreaProfileVisuals } from "@/components/profile/area-profile-visuals";
+import { CrimeHistory } from "@/components/profile/crime-history";
+import { HistoricalContextTable } from "@/components/profile/historical-context";
+import { NearbyStations, type NearbyStationLink } from "@/components/profile/nearby-stations";
+import { UnusualMovements } from "@/components/profile/unusual-movements";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Note } from "@/components/ui/note";
 import { Eyebrow, Section } from "@/components/ui/section";
 import { FINANCIAL_YEAR_EXPLANATION } from "@/lib/crime/financial-year";
-import { HEADLINE_COMMUNITY_COLUMNS } from "@/lib/crime/taxonomy";
+import { FEATURED_SERIES, HEADLINE_COMMUNITY_COLUMNS } from "@/lib/crime/taxonomy";
 import type { StationProfile as StationProfileData } from "@/lib/data/stations";
 import { formatCount } from "@/lib/format";
-import { buildInsights } from "@/lib/metrics/insights";
+import { calculateChange } from "@/lib/metrics/change";
+import {
+  buildCrimeHistory,
+  buildHistoricalContext,
+  classifyUnusualMovement,
+  totalSeries,
+} from "@/lib/metrics/history";
+import { buildInsights, missingTotalNote } from "@/lib/metrics/insights";
 import {
   buildBreakdown,
   buildCategoryChanges,
+  buildSeries,
   buildYearTotals,
-  fiveYearChange,
   totalChange,
 } from "@/lib/metrics/profile";
-import { calculateChange } from "@/lib/metrics/change";
 
 /**
  * Everything CrimeMap SA can say about one police station precinct.
  *
- * The order answers the questions a reader arrives with: how much was recorded, how that compares
- * with before, what makes up the total, and what moved. Each figure names the year it belongs to,
- * so no number on this page is undated.
+ * The order answers what was recorded, what the mix looks like, whether the latest year moved,
+ * how that compares with history, and which nearby stations provide geographic context.
  */
-export function StationProfile({ profile }: { profile: StationProfileData }) {
+export function StationProfile({
+  profile,
+  nearby = [],
+}: {
+  profile: StationProfileData;
+  nearby?: readonly NearbyStationLink[];
+}) {
   const { station, records } = profile;
 
   const ordered = [...records].sort((a, b) => a.financialYearStart - b.financialYearStart);
@@ -49,10 +64,14 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
 
   const totals = buildYearTotals(latest);
   const change = totalChange(latest, previous);
-  const fiveYear = fiveYearChange(ordered, latest.financialYearStart);
   const categoryChanges = buildCategoryChanges(latest, previous);
+  const series = totalSeries(ordered);
+  const historical = buildHistoricalContext(series);
+  const history = buildCrimeHistory(series);
+  const unusual = classifyUnusualMovement(series);
 
-  const breakdownRows = buildBreakdown(latest).map((row) => ({
+  const breakdownRows = buildBreakdown(latest);
+  const breakdownWithChange = breakdownRows.map((row) => ({
     ...row,
     change: calculateChange(
       latest.counts[row.column] ?? null,
@@ -60,9 +79,8 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
     ),
   }));
 
-  const largestCategory = breakdownRows.find((row) => row.value !== null);
-
   const insights = buildInsights({
+    entityId: station.slug,
     financialYear: latest.financialYear,
     previousFinancialYear: previous?.financialYear ?? null,
     totalRecordedCrime: totals.totalRecordedCrime,
@@ -70,38 +88,34 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
     missingCategories: totals.missingCategories,
     totalChange: change,
     categoryChanges,
+    historical,
+    unusual,
+    breakdown: breakdownRows,
   });
+
+  const categoryUnusual = FEATURED_SERIES.filter((item) => item.key !== "all")
+    .map((item) => ({
+      label: item.label,
+      movement: classifyUnusualMovement(buildSeries(ordered, item)),
+    }))
+    .filter(
+      (item) =>
+        item.movement.classification === "notable" ||
+        item.movement.classification === "largest_increase" ||
+        item.movement.classification === "largest_decrease",
+    )
+    .slice(0, 3);
+
+  const missingNote = missingTotalNote(totals.missingCategories);
 
   return (
     <div className="space-y-14">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
           label={`Recorded crime, ${latest.financialYear}`}
           value={totals.totalRecordedCrime}
           change={change}
           caption={`Across the ${HEADLINE_COMMUNITY_COLUMNS.length} community-reported serious crime categories.`}
-        />
-        <StatCard
-          label="Change over five years"
-          value={
-            fiveYear.comparisonYear
-              ? `${fiveYear.change.percentChange === null ? "—" : `${fiveYear.change.percentChange > 0 ? "+" : "−"}${Math.abs(fiveYear.change.percentChange).toFixed(1)}%`}`
-              : "Not available"
-          }
-          caption={
-            fiveYear.comparisonYear
-              ? `Compared with ${fiveYear.comparisonYear}, from ${formatCount(fiveYear.change.previous)} to ${formatCount(fiveYear.change.current)} recorded crimes.`
-              : "The dataset has no record for the year five years before this one, and CrimeMap SA does not estimate a missing year."
-          }
-        />
-        <StatCard
-          label="Most recorded category"
-          value={largestCategory?.label ?? "Not available"}
-          caption={
-            largestCategory
-              ? `${formatCount(largestCategory.value)} recorded cases, ${largestCategory.shareOfTotal?.toFixed(1) ?? "—"}% of the total.`
-              : "The source provides no category figures for this year."
-          }
         />
         <StatCard
           label="Years of data"
@@ -110,39 +124,27 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
         />
       </div>
 
+      {missingNote ? <Note>{missingNote}</Note> : null}
+
+      <Section
+        title="Area snapshot"
+        description={`The ${latest.financialYear} total compared with this precinct's own history. Averages skip years the source does not provide rather than treating them as zero.`}
+      >
+        <HistoricalContextTable context={historical} />
+      </Section>
+
       <Section
         title="What the figures show"
-        description="Plain-English statements generated directly from the numbers above. They describe what was recorded and nothing beyond it."
+        description="Plain-English statements generated from the calculations on this page. They describe what was recorded and nothing beyond it."
       >
-        <Card>
-          <CardContent className="pt-5">
-            <ul className="space-y-3">
-              {insights.map((insight) => (
-                <li key={insight.id} className="flex gap-3 text-sm leading-relaxed">
-                  <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
-                  <span className="text-muted-strong">{insight.text}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <AreaInsights insights={insights} />
       </Section>
 
-      <Section
-        title="Recorded crime over time"
-        description={`Every financial year the dataset holds for ${station.name}, from ${ordered[0]?.financialYear} to ${latest.financialYear}.`}
-      >
-        <StationTrend records={ordered} />
-      </Section>
-
-      <Section
-        title={`What makes up the total in ${latest.financialYear}`}
-        description="The 17 community-reported serious crime categories, largest first. Subcategories are included within their parent category rather than listed separately, so nothing is counted twice."
-      >
-        <Card className="p-5">
-          <CategoryBreakdown rows={breakdownRows} totalRecordedCrime={totals.totalRecordedCrime} />
-        </Card>
-      </Section>
+      <AreaProfileVisuals
+        records={ordered}
+        breakdown={breakdownWithChange}
+        totalRecordedCrime={totals.totalRecordedCrime}
+      />
 
       <Section
         title="What's changing"
@@ -160,6 +162,29 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
       </Section>
 
       <Section
+        title="Crime history"
+        description={`Highest and lowest recorded years for ${station.name}, and the largest comparable year-on-year movements in the dataset.`}
+      >
+        <CrimeHistory milestones={history} entityLabel={station.name} />
+      </Section>
+
+      <Section
+        title="Unusual movements"
+        description="The latest year-on-year change compared with this precinct's own earlier comparable movements, not with a national ranking."
+      >
+        <UnusualMovements movement={unusual} categoryMovements={categoryUnusual} />
+      </Section>
+
+      {nearby.length > 0 ? (
+        <Section
+          title="Nearby stations"
+          description="Geographic context only. CrimeMap SA does not assign a suburb to an official precinct."
+        >
+          <NearbyStations stations={nearby} placeName={station.name} />
+        </Section>
+      ) : null}
+
+      <Section
         title="Crime detected through police action"
         description="Reported separately because these figures largely reflect how much policing activity took place, not how much crime was reported by the public. They are not part of the total above."
       >
@@ -169,9 +194,7 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-sm text-muted">
-                Total detected through police action
-              </span>
+              <span className="text-sm text-muted">Total detected through police action</span>
               <span className="flex items-baseline gap-3">
                 <span className="tabular text-lg font-semibold">
                   {formatCount(totals.policeActionTotal)}
@@ -189,7 +212,7 @@ export function StationProfile({ profile }: { profile: StationProfileData }) {
         </Card>
       </Section>
 
-      <Section title="About these figures">
+      <Section title="Source and methodology">
         <div className="space-y-4">
           <Note>
             These are crimes <strong>recorded by police</strong> in the {station.name} precinct, not
@@ -256,9 +279,7 @@ export function StationHeader({ profile }: { profile: StationProfileData }) {
   return (
     <div>
       <Eyebrow>Police station precinct</Eyebrow>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-        {station.name}
-      </h1>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{station.name}</h1>
       <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
         {[station.localMunicipality, station.districtMunicipality, station.provinceName]
           .filter(Boolean)

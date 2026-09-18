@@ -810,6 +810,35 @@ export type Database = {
           total_recorded_crime: number
         }[]
       }
+      national_category_trend: {
+        Args: { p_category: string }
+        Returns: {
+          financial_year: string
+          financial_year_start: number
+          category_value: number
+          stations_reporting: number
+        }[]
+      }
+      province_category_totals: {
+        Args: { p_category: string; p_year?: string }
+        Returns: {
+          province_slug: string
+          province_name: string
+          financial_year: string
+          current_total: number
+          previous_total: number
+          stations_reporting: number
+        }[]
+      }
+      province_category_trend: {
+        Args: { p_category: string; p_province_slug: string }
+        Returns: {
+          financial_year: string
+          financial_year_start: number
+          category_value: number
+          stations_reporting: number
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }

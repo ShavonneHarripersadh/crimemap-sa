@@ -10,7 +10,8 @@ export type SearchResultType =
   | "local_municipality"
   | "district_municipality"
   | "province"
-  | "nearby_station";
+  | "nearby_station"
+  | "place";
 
 export interface SearchResult {
   readonly type: SearchResultType;
@@ -28,6 +29,7 @@ const TYPE_LABELS: Record<SearchResultType, string> = {
   district_municipality: "District municipality",
   province: "Province",
   nearby_station: "Nearest station",
+  place: "Place",
 };
 
 function contextLine(row: {
@@ -180,7 +182,16 @@ async function nearestStationsToPlace(
 
   if (error || !data) return [];
 
-  return data.map((row) => {
+  const placeResult: SearchResult = {
+    type: "place",
+    typeLabel: TYPE_LABELS.place,
+    label: place.name,
+    context: "No SAPS precinct boundary · nearby stations",
+    href: `/place/${encodeURIComponent(place.name)}`,
+    stationCount: data.length,
+  };
+
+  const stations = data.map((row) => {
     const result = toSearchResult({
       result_type: "nearby_station",
       label: row.station_name,
@@ -204,4 +215,6 @@ async function nearestStationsToPlace(
         .join(" · "),
     };
   });
+
+  return [placeResult, ...stations];
 }

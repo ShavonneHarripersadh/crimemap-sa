@@ -28,6 +28,25 @@ export function volumeColor(t: number): string {
   return `rgb(${r}, ${g}, ${bl})`;
 }
 
+/**
+ * Diverging colours for year-on-year change. Decrease is cooler, increase is warmer.
+ * Grey is used when a percentage cannot be calculated. This is not a safety scale.
+ */
+export const CHANGE_CLASS_COLORS = {
+  unavailable: "#d7d3c8",
+  strong_decrease: "#3d6f8c",
+  decrease: "#7fa3b5",
+  unchanged: "#c4bfb0",
+  increase: "#d4a05c",
+  strong_increase: "#c45c38",
+} as const;
+
+export function changeClassColor(
+  paint: keyof typeof CHANGE_CLASS_COLORS,
+): string {
+  return CHANGE_CLASS_COLORS[paint];
+}
+
 function parseRgb(hex: string): [number, number, number] {
   const value = hex.replace("#", "");
   return [

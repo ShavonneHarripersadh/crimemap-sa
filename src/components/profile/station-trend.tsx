@@ -17,8 +17,17 @@ import { cn } from "@/lib/utils";
  * needs no further request. Composite categories say so, because "Robbery" here is a CrimeMap SA
  * grouping of two source columns rather than a figure SAPS publishes under that name.
  */
-export function StationTrend({ records }: { records: readonly StationYearRecord[] }) {
-  const [seriesKey, setSeriesKey] = useState(FEATURED_SERIES[0]?.key ?? "all");
+export function StationTrend({
+  records,
+  seriesKey: seriesKeyProp,
+  onSeriesKeyChange,
+}: {
+  records: readonly StationYearRecord[];
+  seriesKey?: string;
+  onSeriesKeyChange?: (key: string) => void;
+}) {
+  const [uncontrolledKey, setUncontrolledKey] = useState(FEATURED_SERIES[0]?.key ?? "all");
+  const seriesKey = seriesKeyProp ?? uncontrolledKey;
   const [window, setWindow] = useState<TrendWindow>("all");
 
   const series = FEATURED_SERIES.find((option) => option.key === seriesKey) ?? FEATURED_SERIES[0];
@@ -42,8 +51,10 @@ export function StationTrend({ records }: { records: readonly StationYearRecord[
           <select
             value={seriesKey}
             onChange={(event) => {
-              setSeriesKey(event.target.value);
-              trackEvent("trend_category_changed", { category: event.target.value });
+              const next = event.target.value;
+              onSeriesKeyChange?.(next);
+              if (!onSeriesKeyChange) setUncontrolledKey(next);
+              trackEvent("trend_category_changed", { category: next });
             }}
             className="h-10 min-w-52 rounded-lg border border-border bg-surface px-3 text-sm"
           >

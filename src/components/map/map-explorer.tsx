@@ -5,12 +5,9 @@ import { useState } from "react";
 import { CrimeMap } from "@/components/map/crime-map";
 import { Note } from "@/components/ui/note";
 import { trackEvent } from "@/lib/analytics";
+import type { MapCategoryOption } from "@/lib/map/categories";
 
-export interface MapCategoryOption {
-  readonly value: string;
-  readonly label: string;
-  readonly definition: string;
-}
+export type { MapCategoryOption };
 
 /**
  * The map plus its filters.
@@ -23,14 +20,18 @@ export function MapExplorer({
   categories,
   initialYear,
   initialCategory,
+  detail = true,
 }: {
   years: readonly string[];
   categories: readonly MapCategoryOption[];
   initialYear: string | null;
   initialCategory: string;
+  /** When false, hide the long definition and methodology note — used on the homepage. */
+  detail?: boolean;
 }) {
   const [year, setYear] = useState(initialYear);
   const [category, setCategory] = useState(initialCategory);
+  const [metric, setMetric] = useState<"volume" | "yoy">("volume");
 
   const selected = categories.find((option) => option.value === category) ?? categories[0];
 
@@ -77,7 +78,36 @@ export function MapExplorer({
           </select>
         </label>
 
-        {selected ? (
+        <div role="group" aria-label="Map metric" className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium tracking-wide text-muted uppercase">Metric</span>
+          <div className="flex rounded-lg border border-border bg-surface p-1">
+            {(
+              [
+                { value: "volume", label: "Recorded volume" },
+                { value: "yoy", label: "Year-on-year change" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={metric === option.value}
+                onClick={() => {
+                  setMetric(option.value);
+                  trackEvent("map_metric_changed", { metric: option.value });
+                }}
+                className={
+                  metric === option.value
+                    ? "rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground"
+                    : "rounded-md px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground"
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {detail && selected ? (
           <p className="max-w-md flex-1 text-xs leading-relaxed text-muted">
             {selected.definition}
           </p>
@@ -88,15 +118,19 @@ export function MapExplorer({
         financialYear={year}
         category={category}
         categoryLabel={selected?.label ?? "Recorded crimes"}
+        metric={metric}
         className="w-full"
       />
 
-      <Note>
-        Each coloured area is a local municipality, not a suburb and not an official police
-        precinct. Green is fewer recorded cases in the selected year, red is more. Colour is a
-        count, not a safety score. Zoom in to see each police station. Change the year to compare
-        the same places; the total in the legend is the sum of stations currently loaded.
-      </Note>
+      {detail ? (
+        <Note>
+          Each coloured area is a local municipality, not a suburb and not an official police
+          precinct. Recorded volume uses green for fewer cases and red for more. Year-on-year change
+          uses cooler colours for a decrease and warmer colours for an increase; grey means the
+          change cannot be calculated because of missing figures or a small previous-year count.
+          Colour is not a safety score. Zoom in to see each police station.
+        </Note>
+      ) : null}
     </div>
   );
 }

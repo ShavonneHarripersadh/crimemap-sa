@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Note } from "@/components/ui/note";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
+import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { FINANCIAL_YEAR_EXPLANATION } from "@/lib/crime/financial-year";
 import { HEADLINE_COMMUNITY_COLUMNS, POLICE_ACTION_COLUMNS } from "@/lib/crime/taxonomy";
 import { CHANGE_HIGHLIGHT_RULES, LOW_BASE_THRESHOLD } from "@/lib/metrics/change";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 export default function MethodologyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      <TrackOnMount event="methodology_opened" />
       <PageHeader>
         <Eyebrow>Methodology</Eyebrow>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -103,6 +105,51 @@ export default function MethodologyPage() {
             source name, CrimeMap SA looks the place up geographically and offers the nearest
             stations. That is a distance hint, not an official statement of which precinct a
             suburb falls in.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-foreground">Historical context</h2>
+          <p>
+            Five-year and ten-year averages are the mean of recorded totals whose financial years
+            fall in that window, counting only years the source provides. A missing year is omitted
+            from the mean rather than treated as zero. If fewer years exist than the window, the
+            average uses the years that are present and the page says how many.
+          </p>
+          <p>
+            Historical high and low are the maximum and minimum recorded totals in the available
+            series. Ties are assigned to the most recent year that holds the extreme value.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-foreground">Unusual movements</h2>
+          <p>
+            A latest year-on-year percentage is compared with earlier comparable percentages for
+            the same station or category, not with a national ranking. A movement is comparable
+            only when both years have a figure, the previous-year count is at least{" "}
+            {LOW_BASE_THRESHOLD}, and the change is not a rise from zero.
+          </p>
+          <p>
+            At least five earlier comparable movements are required. The latest movement is the
+            largest recorded increase or decrease when it is strictly larger than every earlier
+            comparable movement in that direction. It is notable when it is not the series extreme
+            but its absolute percentage is at least 1.5 times the median of earlier absolute
+            percentages, and it still clears the “what’s changing” size rules. Otherwise it is
+            described as within the historical range. If those conditions are not met, no unusual
+            claim is made.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-foreground">Map year-on-year change</h2>
+          <p>
+            The optional year-on-year map layer colours a local municipality from the stations that
+            have a figure in both the selected year and the previous year. Stations with a missing
+            value are left out of that municipality’s change rather than counted as zero. A
+            previous-year count below {LOW_BASE_THRESHOLD} is not painted as a percentage. A change
+            of 10% or more is a strong movement; movements inside 2% are treated as broadly
+            unchanged, matching the rest of the site.
           </p>
         </section>
 

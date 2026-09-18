@@ -14,18 +14,24 @@ import {
   type OverlayHit,
 } from "@/components/map/station-overlay-layer";
 import { SearchBox } from "@/components/search/search-box";
-import { formatCompactCount, formatCount } from "@/lib/format";
+import { formatCompactCount, formatCount, formatPercent } from "@/lib/format";
 import type { MapStation } from "@/lib/data/map";
 import type { SearchResult } from "@/lib/data/search";
 import { calculateChange } from "@/lib/metrics/change";
 import { trackEvent } from "@/lib/analytics";
 import {
   aggregateByMunicipality,
+  aggregateMunicipalityChange,
   classBreaks,
   municipalityKey,
   volumeClass,
 } from "@/lib/map/municipality";
-import { VOLUME_CLASS_COLORS, volumeClassColor } from "@/lib/map/volume-color";
+import {
+  CHANGE_CLASS_COLORS,
+  VOLUME_CLASS_COLORS,
+  changeClassColor,
+  volumeClassColor,
+} from "@/lib/map/volume-color";
 import { cn } from "@/lib/utils";
 
 const SOUTH_AFRICA_BOUNDS: [number, number, number, number] = [15.5, -35.5, 33.5, -21.8];
@@ -92,6 +98,7 @@ export function CrimeMapView({
   className,
   chrome = true,
   focus = null,
+  metric = "volume",
 }: {
   financialYear: string | null;
   category: string;
@@ -99,6 +106,7 @@ export function CrimeMapView({
   className?: string;
   chrome?: boolean;
   focus?: { slug: string; longitude: number; latitude: number } | null;
+  metric?: "volume" | "yoy";
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -173,14 +181,26 @@ export function CrimeMapView({
     const shapes = municipalitiesRef.current;
     if (!shapes) return;
 
-    const totals = aggregateByMunicipality(stations);
-    const breaks = classBreaks([...totals.values()].map((row) => row.value));
+    const volumeTotals = aggregateByMunicipality(stations);
+    const changeTotals = metric === "yoy" ? aggregateMunicipalityChange(stations) : null;
+    const breaks = classBreaks([...volumeTotals.values()].map((row) => row.value));
 
     areasLayerRef.current?.remove();
     const layer = L.geoJSON(shapes, {
       style: (feature) => {
         const name = String(feature?.properties && "name" in feature.properties ? feature.properties.name : "");
-        const row = totals.get(municipalityKey(name));
+        const key = municipalityKey(name);
+        if (changeTotals) {
+          const row = changeTotals.get(key);
+          return {
+            fillColor: row ? changeClassColor(row.paint) : CHANGE_CLASS_COLORS.unavailable,
+            fillOpacity: row && row.paint !== "unavailable" ? 0.78 : 0.3,
+            color: "#f7f4ee",
+            weight: 0.8,
+            opacity: 0.85,
+          };
+        }
+        const row = volumeTotals.get(key);
         if (!row) {
           return {
             fillColor: "#d7d3c8",
@@ -202,12 +222,21 @@ export function CrimeMapView({
         const name = String(
           feature.properties && "name" in feature.properties ? feature.properties.name : "",
         );
-        const row = totals.get(municipalityKey(name));
+        const volumeRow = volumeTotals.get(municipalityKey(name));
+        const changeRow = changeTotals?.get(municipalityKey(name));
         const path = featureLayer as L.Path;
         const showHover = (event: L.LeafletMouseEvent) => {
           const point = map.latLngToContainerPoint(event.latlng);
-          const key = `m:${name}`;
-          if (hoverRef.current === key) {
+          const hoverKey = `m:${name}`;
+          const title = changeRow?.label ?? volumeRow?.label ?? name;
+          const detail = changeRow
+            ? changeRow.paint === "unavailable"
+              ? `Year-on-year change not available · ${changeRow.comparableStations} of ${changeRow.stations} stations have figures in both years`
+              : `${formatPercent(changeRow.change.percentChange)} year-on-year · ${formatCount(changeRow.current)} recorded · ${changeRow.comparableStations} of ${changeRow.stations} stations compared`
+            : volumeRow
+              ? `${formatCount(volumeRow.value)} recorded · ${volumeRow.stations} station${volumeRow.stations === 1 ? "" : "s"} · click to zoom`
+              : "No matching stations in this municipality";
+          if (hoverRef.current === hoverKey) {
             path.setStyle({ weight: 2.2, color: "#1a1d24", fillOpacity: 0.9 });
             setHover((current) => (current ? { ...current, x: point.x, y: point.y } : current));
             return;
@@ -217,12 +246,10 @@ export function CrimeMapView({
           }
           path.setStyle({ weight: 2.2, color: "#1a1d24", fillOpacity: 0.9 });
           path.bringToFront();
-          hoverRef.current = key;
+          hoverRef.current = hoverKey;
           setHover({
-            title: row?.label ?? name,
-            detail: row
-              ? `${formatCount(row.value)} recorded · ${row.stations} station${row.stations === 1 ? "" : "s"} · click to zoom`
-              : "No matching stations in this municipality",
+            title,
+            detail,
             x: point.x,
             y: point.y,
           });
@@ -250,7 +277,7 @@ export function CrimeMapView({
     });
     layer.addTo(map);
     areasLayerRef.current = layer;
-  }, []);
+  }, [metric]);
 
   const loadStations = useCallback(async () => {
     const map = mapRef.current;
@@ -337,6 +364,12 @@ export function CrimeMapView({
       setMessage("The stations in this area could not be loaded.");
     }
   }, [paintMunicipalities, positionPopup, rememberProvinces]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || stationsRef.current.length === 0) return;
+    paintMunicipalities(map, stationsRef.current);
+  }, [metric, paintMunicipalities]);
 
   const fitToStations = useCallback((stations: MapStation[], maxZoom = 10) => {
     const map = mapRef.current;
@@ -664,7 +697,7 @@ export function CrimeMapView({
 
         {hover && !selected ? (
           <div
-            className="pointer-events-none absolute z-20 w-56 rounded-lg border border-border-strong bg-background/95 px-3 py-2 shadow-xl shadow-black/50 backdrop-blur"
+            className="pointer-events-none absolute z-20 w-56 rounded-lg border border-border-strong bg-background px-3 py-2 shadow-panel"
             style={{ left: hover.x, top: hover.y, transform: "translate(-50%, calc(-100% - 12px))" }}
           >
             <p className="text-sm font-medium text-foreground">{hover.title}</p>
@@ -674,7 +707,7 @@ export function CrimeMapView({
 
         {selected ? (
           <div ref={selectedPopupRef} className="absolute z-30 w-72 pb-2">
-            <div className="rounded-xl border border-border-strong bg-surface-raised shadow-2xl shadow-black/60">
+            <div className="rounded-xl border border-border-strong bg-surface-raised shadow-panel">
               <button
                 type="button"
                 className="absolute top-2 right-2 rounded-md px-2 text-sm text-muted hover:text-foreground"
@@ -689,7 +722,7 @@ export function CrimeMapView({
         ) : null}
 
         <div className="pointer-events-none absolute top-2 left-2 z-20 max-w-[11.5rem] sm:top-3 sm:left-3 sm:max-w-[16.5rem]">
-          <div className="rounded-lg border border-border bg-background/92 px-2.5 py-1.5 text-[0.6875rem] text-muted shadow-lg shadow-black/30 backdrop-blur sm:px-3 sm:py-2.5 sm:text-xs">
+          <div className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-[0.6875rem] text-muted shadow-panel sm:px-3 sm:py-2.5 sm:text-xs">
             <p className="truncate font-medium text-foreground">
               {financialYear ?? "Recorded cases"} · {categoryLabel}
             </p>
@@ -697,15 +730,17 @@ export function CrimeMapView({
               {status === "ready" ? formatCount(visibleTotal) : status === "loading" ? "…" : "—"}
             </p>
             <p className="hidden text-[0.6875rem] text-muted-strong sm:block">
-              recorded cases
+              {metric === "yoy" ? "year-on-year change" : "recorded cases"}
               {status === "ready" ? ` · ${visibleCount} station${visibleCount === 1 ? "" : "s"}` : ""}
             </p>
             <div className="mt-1.5 sm:mt-2.5">
-              <ColorRamp />
+              <ColorRamp metric={metric} />
             </div>
             <p className="mt-2 hidden leading-snug sm:block">
               {clustered
-                ? "Each shape is a local municipality. Green is fewer recorded cases, red is more. Colour is volume, not a safety score. Click an area to zoom in."
+                ? metric === "yoy"
+                  ? "Each shape is a local municipality. Cooler colours are a recorded decrease, warmer colours an increase. Grey means the change cannot be calculated. Colour is not a safety score."
+                  : "Each shape is a local municipality. Green is fewer recorded cases, red is more. Colour is volume, not a safety score. Click an area to zoom in."
                 : "Each circle is one police station. Size is recorded cases in the selected year, not a rate or a safety score."}
             </p>
             <p className="mt-1 text-[0.625rem] leading-snug text-muted-strong sm:mt-2 sm:text-[0.6875rem]">
@@ -758,7 +793,30 @@ function JumpChip({
   );
 }
 
-function ColorRamp() {
+function ColorRamp({ metric = "volume" }: { metric?: "volume" | "yoy" }) {
+  if (metric === "yoy") {
+    const colors = [
+      CHANGE_CLASS_COLORS.strong_decrease,
+      CHANGE_CLASS_COLORS.decrease,
+      CHANGE_CLASS_COLORS.unchanged,
+      CHANGE_CLASS_COLORS.increase,
+      CHANGE_CLASS_COLORS.strong_increase,
+    ];
+    return (
+      <div>
+        <div className="flex h-1.5 overflow-hidden rounded-full sm:h-2">
+          {colors.map((color) => (
+            <span key={color} className="flex-1" style={{ background: color }} />
+          ))}
+        </div>
+        <div className="mt-1 hidden justify-between text-[0.625rem] tracking-wide text-muted uppercase sm:flex">
+          <span>Decrease</span>
+          <span>Increase</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex h-1.5 overflow-hidden rounded-full sm:h-2">

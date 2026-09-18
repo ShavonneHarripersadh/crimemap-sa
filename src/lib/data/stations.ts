@@ -161,6 +161,51 @@ export async function getStationProfilesBySlugs(
   return ok(ordered);
 }
 
+export interface NearbyStation {
+  readonly slug: string;
+  readonly name: string;
+  readonly localMunicipality: string | null;
+  readonly provinceName: string | null;
+  readonly provinceSlug: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly distanceMeters: number;
+}
+
+export async function getNearbyStations(
+  longitude: number,
+  latitude: number,
+  limit = 5,
+  excludeSlug?: string,
+): Promise<DataResult<NearbyStation[]>> {
+  const client = getServerClient();
+  if (!client) return fail("not_configured", NOT_CONFIGURED_MESSAGE);
+
+  const { data, error } = await client.rpc("stations_nearest", {
+    p_lng: longitude,
+    p_lat: latitude,
+    p_limit: Math.min(Math.max(limit + (excludeSlug ? 1 : 0), 1), 10),
+  });
+
+  if (error) return fail("query_failed", error.message);
+
+  const stations: NearbyStation[] = (data ?? [])
+    .filter((row) => row.station_slug !== excludeSlug)
+    .slice(0, limit)
+    .map((row) => ({
+      slug: row.station_slug,
+      name: row.station_name,
+      localMunicipality: row.local_municipality,
+      provinceName: row.province_name,
+      provinceSlug: row.province_slug,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      distanceMeters: Number(row.distance_meters),
+    }));
+
+  return ok(stations);
+}
+
 /** Station slugs and provinces for the sitemap and static params. */
 export async function getAllStationRoutes(): Promise<
   DataResult<{ slug: string; provinceSlug: string | null; updatedAt: string | null }[]>

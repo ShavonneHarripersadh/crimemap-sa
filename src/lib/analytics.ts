@@ -14,11 +14,17 @@ export type AnalyticsEvent =
   | "map_year_changed"
   | "map_station_opened"
   | "map_province_jumped"
+  | "map_metric_changed"
   | "trend_category_changed"
   | "trend_window_changed"
+  | "category_selected"
+  | "category_deep_dive_opened"
+  | "category_year_changed"
+  | "category_province_changed"
   | "comparison_area_added"
   | "comparison_viewed"
-  | "methodology_opened";
+  | "methodology_opened"
+  | "theme_changed";
 
 export function trackEvent(
   event: AnalyticsEvent,
