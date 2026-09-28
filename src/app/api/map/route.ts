@@ -17,6 +17,7 @@ const querySchema = z.object({
   year: z.string().regex(/^\d{4}\/\d{2}$/).optional(),
   category: z.string().min(1).max(60).optional(),
   limit: z.coerce.number().int().min(1).max(2000).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
 });
 
 export async function GET(request: Request) {
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
     ...(params.get("year") ? { year: params.get("year") } : {}),
     ...(params.get("category") ? { category: params.get("category") } : {}),
     ...(params.get("limit") ? { limit: params.get("limit") } : {}),
+    ...(params.get("entityId") ? { entityId: params.get("entityId") } : {}),
   });
 
   if (!parsed.success) {
@@ -39,7 +41,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const { west, south, east, north, year, category, limit } = parsed.data;
+  const { west, south, east, north, year, category, limit, entityId } = parsed.data;
 
   if (west >= east || south >= north) {
     return NextResponse.json(
@@ -53,6 +55,7 @@ export async function GET(request: Request) {
     financialYear: year ?? null,
     ...(category ? { category } : {}),
     ...(limit ? { limit } : {}),
+    ...(entityId ? { entityId } : {}),
   });
 
   if (!result.ok) {

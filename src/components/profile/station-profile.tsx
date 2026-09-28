@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { ChangeIndicator } from "@/components/data/change-indicator";
-import { StatCard } from "@/components/data/stat-card";
 import { WhatsChanging } from "@/components/data/whats-changing";
 import { CrimeMap } from "@/components/map/crime-map";
 import { AreaInsights } from "@/components/profile/area-insights";
@@ -17,8 +16,8 @@ import { Eyebrow, Section } from "@/components/ui/section";
 import { FINANCIAL_YEAR_EXPLANATION } from "@/lib/crime/financial-year";
 import { FEATURED_SERIES, HEADLINE_COMMUNITY_COLUMNS } from "@/lib/crime/taxonomy";
 import type { StationProfile as StationProfileData } from "@/lib/data/stations";
-import { formatCount } from "@/lib/format";
-import { calculateChange } from "@/lib/metrics/change";
+import { describeChangeState, directionIndicator, formatCount } from "@/lib/format";
+import { calculateChange, trendDirection, type Change } from "@/lib/metrics/change";
 import {
   buildCrimeHistory,
   buildHistoricalContext,
@@ -34,18 +33,29 @@ import {
   totalChange,
 } from "@/lib/metrics/profile";
 
+/** How the page names the place the reader searched, when that is not the precinct itself. */
+export interface ProfileSubject {
+  readonly name: string;
+  readonly kind: "place" | "precinct";
+  readonly sourceStationName: string;
+  readonly sourceHref: string;
+  readonly distanceLabel?: string | null;
+}
+
 /**
  * Everything CrimeMap SA can say about one police station precinct.
  *
- * The order answers what was recorded, what the mix looks like, whether the latest year moved,
- * how that compares with history, and which nearby stations provide geographic context.
+ * The opening sections answer what changed. Longer history and category charts stay available
+ * under detailed analysis.
  */
 export function StationProfile({
   profile,
   nearby = [],
+  subject,
 }: {
   profile: StationProfileData;
   nearby?: readonly NearbyStationLink[];
+  subject?: ProfileSubject;
 }) {
   const { station, records } = profile;
 
@@ -107,28 +117,104 @@ export function StationProfile({
     .slice(0, 3);
 
   const missingNote = missingTotalNote(totals.missingCategories);
+  const placeName = subject?.name ?? station.name;
+  const sourceName = subject?.sourceStationName ?? station.name;
+  const sourceHref = subject?.sourceHref ?? (station.provinceSlug
+    ? `/crime/${station.provinceSlug}/${station.slug}`
+    : `/station/${station.slug}`);
 
   return (
     <div className="space-y-14">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard
-          label={`Recorded crime, ${latest.financialYear}`}
-          value={totals.totalRecordedCrime}
-          change={change}
-          caption={`Across the ${HEADLINE_COMMUNITY_COLUMNS.length} community-reported serious crime categories.`}
-        />
-        <StatCard
-          label="Years of data"
-          value={`${ordered.length}`}
-          caption={`${ordered[0]?.financialYear} to ${latest.financialYear}. ${FINANCIAL_YEAR_EXPLANATION}`}
-        />
-      </div>
-
-      {missingNote ? <Note>{missingNote}</Note> : null}
+      <section aria-labelledby="crime-overview-heading">
+        <h2 id="crime-overview-heading" className="text-sm font-medium tracking-wide text-muted uppercase">
+          Crime overview
+        </h2>
+        <p className="mt-3 text-5xl font-semibold tracking-tight tabular sm:text-6xl">
+          <span aria-hidden>{directionIndicator(trendDirection(change))}</span>{" "}
+          <span className={overviewTone(change)}>{overviewFigure(change)}</span>
+        </p>
+        <p className="mt-3 max-w-xl text-base text-foreground">
+          {overviewSentence(change, previous?.financialYear ?? null)}
+        </p>
+        <p className="mt-2 text-sm text-muted">
+          {formatCount(totals.totalRecordedCrime)} recorded cases in {latest.financialYear}, across
+          the {HEADLINE_COMMUNITY_COLUMNS.length} community-reported categories.
+        </p>
+        <dl className="mt-5 space-y-1 text-sm">
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-muted">Data source</dt>
+            <dd>
+              <Link href={sourceHref} className="font-medium text-foreground hover:text-accent">
+                {sourceName} SAPS precinct
+              </Link>
+              {subject?.distanceLabel ? (
+                <span className="text-muted"> · {subject.distanceLabel} from {placeName}</span>
+              ) : null}
+            </dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-muted">Latest available data</dt>
+            <dd className="font-medium">{latest.financialYear}</dd>
+          </div>
+        </dl>
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
+          Crime statistics are reported at police-precinct level. They are not suburb-specific
+          incident counts.
+        </p>
+        {missingNote ? <Note className="mt-4">{missingNote}</Note> : null}
+      </section>
 
       <Section
+        title="What changed?"
+        description={
+          previous
+            ? `Largest movements between ${previous.financialYear} and ${latest.financialYear}. Smaller changes, and any missing figure, are left out.`
+            : undefined
+        }
+      >
+        <WhatsChanging
+          changes={categoryChanges}
+          financialYear={latest.financialYear}
+          previousFinancialYear={previous?.financialYear ?? null}
+        />
+      </Section>
+
+      <AreaProfileVisuals
+        records={ordered}
+        breakdown={breakdownWithChange}
+        totalRecordedCrime={totals.totalRecordedCrime}
+      />
+
+      <section className="rounded-xl border border-border bg-surface px-5 py-5">
+        <h2 className="text-lg font-semibold tracking-tight">Compare this area</h2>
+        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted">
+          Put the {sourceName} precinct, which supplies the figures
+          {subject?.kind === "place" ? ` for ${placeName}` : ""}, next to another precinct. The
+          comparison does not pick a safer area.
+        </p>
+        <Link
+          href={`/compare?areas=${station.slug}`}
+          className="mt-4 inline-flex h-11 items-center rounded-lg border border-border bg-surface-raised px-4 text-sm font-medium hover:border-border-strong"
+        >
+          Compare with another area
+        </Link>
+      </section>
+
+      <details className="group rounded-xl border border-border bg-surface-raised">
+        <summary className="cursor-pointer list-none px-5 py-4 text-base font-semibold tracking-tight [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center justify-between gap-3">
+            Detailed analysis
+            <span className="text-sm font-normal text-muted group-open:hidden">Show</span>
+            <span className="hidden text-sm font-normal text-muted group-open:inline">Hide</span>
+          </span>
+          <span className="mt-1 block text-sm font-normal text-muted">
+            History, unusual movements, and crimes recorded through police action.
+          </span>
+        </summary>
+        <div className="space-y-12 border-t border-border px-5 py-6">
+      <Section
         title="Area snapshot"
-        description={`The ${latest.financialYear} total compared with this precinct's own history. Averages skip years the source does not provide rather than treating them as zero.`}
+        description={`The ${latest.financialYear} total compared with this precinct's own history. Averages skip years the source does not provide rather than treating them as zero. ${ordered[0]?.financialYear} to ${latest.financialYear}. ${FINANCIAL_YEAR_EXPLANATION}`}
       >
         <HistoricalContextTable context={historical} />
       </Section>
@@ -138,27 +224,6 @@ export function StationProfile({
         description="Plain-English statements generated from the calculations on this page. They describe what was recorded and nothing beyond it."
       >
         <AreaInsights insights={insights} />
-      </Section>
-
-      <AreaProfileVisuals
-        records={ordered}
-        breakdown={breakdownWithChange}
-        totalRecordedCrime={totals.totalRecordedCrime}
-      />
-
-      <Section
-        title="What's changing"
-        description={
-          previous
-            ? `Categories with the largest movements between ${previous.financialYear} and ${latest.financialYear}. A change is only listed when it is large enough in both absolute and proportional terms.`
-            : undefined
-        }
-      >
-        <WhatsChanging
-          changes={categoryChanges}
-          financialYear={latest.financialYear}
-          previousFinancialYear={previous?.financialYear ?? null}
-        />
       </Section>
 
       <Section
@@ -211,8 +276,10 @@ export function StationProfile({
           </CardContent>
         </Card>
       </Section>
+        </div>
+      </details>
 
-      <Section title="Source and methodology">
+      <Section title="About this data">
         <div className="space-y-4">
           <Note>
             These are crimes <strong>recorded by police</strong> in the {station.name} precinct, not
@@ -278,7 +345,7 @@ export function StationHeader({ profile }: { profile: StationProfileData }) {
 
   return (
     <div>
-      <Eyebrow>Police station precinct</Eyebrow>
+      <Eyebrow>Police precinct</Eyebrow>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{station.name}</h1>
       <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
         {[station.localMunicipality, station.districtMunicipality, station.provinceName]
@@ -292,4 +359,40 @@ export function StationHeader({ profile }: { profile: StationProfileData }) {
       </div>
     </div>
   );
+}
+
+function overviewFigure(change: Change): string {
+  if (change.state === "ok" && change.percentChange !== null) {
+    return `${Math.abs(change.percentChange).toFixed(1)}%`;
+  }
+  if (change.state === "newly_recorded") return "New";
+  if (change.state === "none_in_either_year") return "None";
+  return "—";
+}
+
+function overviewTone(change: Change): string {
+  const direction = trendDirection(change);
+  if (direction === "increase") return "text-increase";
+  if (direction === "decrease") return "text-decrease";
+  return "text-foreground";
+}
+
+function overviewSentence(change: Change, previousYear: string | null): string {
+  if (!previousYear) {
+    return "There is no earlier period in the dataset to compare with.";
+  }
+  const direction = trendDirection(change);
+  if (change.state === "ok" && change.percentChange !== null && direction !== "unavailable") {
+    const amount = `${Math.abs(change.percentChange).toFixed(1)}%`;
+    if (direction === "increase") {
+      return `Reported crime increased by ${amount} compared with ${previousYear}.`;
+    }
+    if (direction === "decrease") {
+      return `Reported crime decreased by ${amount} compared with ${previousYear}.`;
+    }
+    if (direction === "broadly_unchanged") {
+      return `Reported crime was broadly unchanged compared with ${previousYear}.`;
+    }
+  }
+  return `${describeChangeState(change)} The comparison period is ${previousYear}.`;
 }

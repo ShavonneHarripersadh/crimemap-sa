@@ -459,6 +459,15 @@ export function CrimeMapView({
       }
 
       if (result.type === "local_municipality" || result.type === "district_municipality") {
+        if (result.entityId != null) {
+          const matches = await fetchEntityStations(result.entityId, filtersRef.current);
+          if (matches.length > 0) {
+            setSelected(null);
+            fitToStations(matches, 11);
+          }
+          return;
+        }
+
         const needle = result.label.toLowerCase();
         const matches = atlasRef.current.filter((station) =>
           [station.localMunicipality, station.name].some((value) =>
@@ -706,7 +715,7 @@ export function CrimeMapView({
         ) : null}
 
         {selected ? (
-          <div ref={selectedPopupRef} className="absolute z-30 w-72 pb-2">
+          <div ref={selectedPopupRef} className="map-station-sheet absolute z-30 w-72 pb-2">
             <div className="rounded-xl border border-border-strong bg-surface-raised shadow-panel">
               <button
                 type="button"
@@ -739,8 +748,8 @@ export function CrimeMapView({
             <p className="mt-2 hidden leading-snug sm:block">
               {clustered
                 ? metric === "yoy"
-                  ? "Each shape is a local municipality. Cooler colours are a recorded decrease, warmer colours an increase. Grey means the change cannot be calculated. Colour is not a safety score."
-                  : "Each shape is a local municipality. Green is fewer recorded cases, red is more. Colour is volume, not a safety score. Click an area to zoom in."
+                  ? "Each shape is a municipality. The scale runs from a recorded decrease to an increase. Grey means the change cannot be calculated. This is not a safety score."
+                  : "Each shape is a municipality. The scale runs from fewer recorded cases to more. This is the selected count, not a safety score. Click an area to zoom in."
                 : "Each circle is one police station. Size is recorded cases in the selected year, not a rate or a safety score."}
             </p>
             <p className="mt-1 text-[0.625rem] leading-snug text-muted-strong sm:mt-2 sm:text-[0.6875rem]">
@@ -996,6 +1005,30 @@ function stationSlugFromHref(href: string): string | null {
   if (parts[0] === "crime" && parts.length >= 3) return parts[2] ?? null;
   if (parts[0] === "station" && parts[1]) return parts[1];
   return null;
+}
+
+async function fetchEntityStations(
+  entityId: number,
+  filters: { financialYear: string | null; category: string },
+): Promise<MapStation[]> {
+  const params = new URLSearchParams({
+    west: "15.5",
+    south: "-35.5",
+    east: "33.5",
+    north: "-21.8",
+    category: filters.category,
+    limit: "2000",
+    entityId: String(entityId),
+  });
+  if (filters.financialYear) params.set("year", filters.financialYear);
+  try {
+    const response = await fetch(`/api/map?${params.toString()}`);
+    if (!response.ok) return [];
+    const body = (await response.json()) as { stations?: MapStation[] };
+    return body.stations ?? [];
+  } catch {
+    return [];
+  }
 }
 
 async function fetchStation(

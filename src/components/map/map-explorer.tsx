@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { CrimeMap } from "@/components/map/crime-map";
-import { Note } from "@/components/ui/note";
 import { trackEvent } from "@/lib/analytics";
 import type { MapCategoryOption } from "@/lib/map/categories";
 
@@ -32,23 +31,46 @@ export function MapExplorer({
   const [year, setYear] = useState(initialYear);
   const [category, setCategory] = useState(initialCategory);
   const [metric, setMetric] = useState<"volume" | "yoy">("volume");
+  const [analysisOpen, setAnalysisOpen] = useState(false);
 
   const selected = categories.find((option) => option.value === category) ?? categories[0];
+  const simple = metric === "volume";
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">
+            {simple ? "Simple view" : "Analysis"}
+          </p>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
+            {simple
+              ? selected && selected.value !== "total_recorded_crime"
+                ? `Shows how many ${selected.label.toLowerCase()} cases were recorded in ${year ?? "the latest year"}. Colour shows that count. It is not a safety rating.`
+                : `Shows the number of recorded crimes in ${year ?? "the latest year"}. Colour shows that count. It is not a safety rating.`
+              : "Shows whether recorded crime increased or decreased compared with the previous available year."}
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-expanded={analysisOpen}
+          onClick={() => setAnalysisOpen((open) => !open)}
+          className="h-11 shrink-0 rounded-lg border border-border bg-surface-raised px-4 text-sm font-medium hover:border-border-strong"
+        >
+          {analysisOpen ? "Hide analysis" : "Analysis"}
+        </button>
+      </div>
+
       <div className="flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium tracking-wide text-muted uppercase">
-            Financial year
-          </span>
+        <label className="flex min-w-36 flex-1 flex-col gap-1.5 sm:flex-none">
+          <span className="text-xs font-medium tracking-wide text-muted uppercase">Period</span>
           <select
             value={year ?? ""}
             onChange={(event) => {
               setYear(event.target.value);
               trackEvent("map_year_changed", { year: event.target.value });
             }}
-            className="h-10 min-w-36 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
+            className="h-11 min-w-36 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
           >
             {years.map((option) => (
               <option key={option} value={option}>
@@ -58,7 +80,7 @@ export function MapExplorer({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5">
+        <label className="flex min-w-56 flex-1 flex-col gap-1.5 sm:flex-none">
           <span className="text-xs font-medium tracking-wide text-muted uppercase">
             Crime category
           </span>
@@ -68,7 +90,7 @@ export function MapExplorer({
               setCategory(event.target.value);
               trackEvent("map_category_changed", { category: event.target.value });
             }}
-            className="h-10 min-w-56 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
+            className="h-11 min-w-56 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
           >
             {categories.map((option) => (
               <option key={option.value} value={option.value}>
@@ -77,14 +99,23 @@ export function MapExplorer({
             ))}
           </select>
         </label>
+      </div>
 
-        <div role="group" aria-label="Map metric" className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium tracking-wide text-muted uppercase">Metric</span>
-          <div className="flex rounded-lg border border-border bg-surface p-1">
+      {analysisOpen ? (
+        <div role="group" aria-label="Analysis view" className="rounded-xl border border-border bg-surface p-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
             {(
               [
-                { value: "volume", label: "Recorded volume" },
-                { value: "yoy", label: "Year-on-year change" },
+                {
+                  value: "volume",
+                  label: "Recorded cases",
+                  help: "Shows the number of reported crimes.",
+                },
+                {
+                  value: "yoy",
+                  label: "Change",
+                  help: "Shows whether reported crime increased or decreased.",
+                },
               ] as const
             ).map((option) => (
               <button
@@ -97,22 +128,20 @@ export function MapExplorer({
                 }}
                 className={
                   metric === option.value
-                    ? "rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground"
-                    : "rounded-md px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground"
+                    ? "rounded-lg bg-accent px-4 py-3 text-left text-accent-foreground"
+                    : "rounded-lg px-4 py-3 text-left hover:bg-surface-hover"
                 }
               >
-                {option.label}
+                <span className="block text-sm font-medium">{option.label}</span>
+                <span className="mt-0.5 block text-xs opacity-80">{option.help}</span>
               </button>
             ))}
           </div>
+          {detail && selected ? (
+            <p className="mt-3 text-xs leading-relaxed text-muted">{selected.definition}</p>
+          ) : null}
         </div>
-
-        {detail && selected ? (
-          <p className="max-w-md flex-1 text-xs leading-relaxed text-muted">
-            {selected.definition}
-          </p>
-        ) : null}
-      </div>
+      ) : null}
 
       <CrimeMap
         financialYear={year}
@@ -123,13 +152,12 @@ export function MapExplorer({
       />
 
       {detail ? (
-        <Note>
-          Each coloured area is a local municipality, not a suburb and not an official police
-          precinct. Recorded volume uses green for fewer cases and red for more. Year-on-year change
-          uses cooler colours for a decrease and warmer colours for an increase; grey means the
-          change cannot be calculated because of missing figures or a small previous-year count.
-          Colour is not a safety score. Zoom in to see each police station.
-        </Note>
+        <p className="max-w-2xl text-sm leading-relaxed text-muted">
+          Each coloured area is a municipality, not a suburb and not a police precinct. The legend
+          on the map stays with the view: one end is fewer recorded cases, the other is more. A
+          change view uses a decrease-to-increase scale. Grey means the change cannot be
+          calculated. Colour is not a safety score. Zoom in to see each police station.
+        </p>
       ) : null}
     </div>
   );

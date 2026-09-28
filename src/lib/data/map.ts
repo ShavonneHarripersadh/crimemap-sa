@@ -1,5 +1,6 @@
 import "server-only";
 
+import { stationsForEntity } from "@/lib/map/entity-membership";
 import { calculateChange, type Change } from "@/lib/metrics/change";
 import { getServerClient } from "@/lib/supabase/server";
 import { fail, ok, NOT_CONFIGURED_MESSAGE, type DataResult } from "@/lib/data/result";
@@ -108,24 +109,77 @@ async function fetchStationsInBbox(
 }
 
 /**
+ * Station slugs that belong to an entity via within relationships.
+ * The municipality name is not consulted. A station with no such link is left out.
+ */
+async function slugsForEntity(
+  client: NonNullable<ReturnType<typeof getServerClient>>,
+  entityId: number,
+): Promise<{ slugs: Set<string> } | { error: string }> {
+  const { data: links, error: linkError } = await client
+    .from("geo_relationships")
+    .select("from_entity_id, to_entity_id, relation_type")
+    .eq("to_entity_id", entityId)
+    .eq("relation_type", "within")
+    .limit(2000);
+
+  if (linkError) return { error: linkError.message };
+
+  const relationships = (links ?? []).map((link) => ({
+    fromEntityId: link.from_entity_id,
+    toEntityId: link.to_entity_id,
+    relationType: link.relation_type,
+  }));
+  const candidateIds = [...new Set([entityId, ...relationships.map((link) => link.fromEntityId)])];
+
+  const { data: linkedStations, error: stationError } = await client
+    .from("police_stations")
+    .select("station_slug, entity_id")
+    .in("entity_id", candidateIds)
+    .limit(2000);
+
+  if (stationError) return { error: stationError.message };
+
+  const matched = stationsForEntity(
+    entityId,
+    relationships,
+    (linkedStations ?? []).map((station) => ({
+      slug: station.station_slug,
+      entityId: station.entity_id,
+    })),
+  );
+
+  return { slugs: new Set(matched.map((station) => station.slug)) };
+}
+
+/**
  * Stations inside a bounding box for one financial year and one category.
  *
  * The query runs in PostGIS against a spatial index, so the browser only ever receives the
  * stations that are currently in view rather than the national dataset.
+ *
+ * When entityId is set, the box is then limited to stations that belong to that entity.
+ * Requests that omit entityId are unchanged.
  */
 export async function getMapStations(options: {
   bbox: BoundingBox;
   financialYear?: string | null;
   category?: string;
   limit?: number;
+  entityId?: number | null;
 }): Promise<DataResult<MapStation[]>> {
   const client = getServerClient();
   if (!client) return fail("not_configured", NOT_CONFIGURED_MESSAGE);
 
-  const { bbox, financialYear = null, category = "total_recorded_crime", limit = 2000 } =
-    options;
+  const {
+    bbox,
+    financialYear = null,
+    category = "total_recorded_crime",
+    limit = 2000,
+    entityId = null,
+  } = options;
 
-  const { data, error } = await fetchStationsInBbox(client, {
+  const { data: bboxRows, error } = await fetchStationsInBbox(client, {
     bbox,
     financialYear,
     category,
@@ -133,6 +187,13 @@ export async function getMapStations(options: {
   });
 
   if (error) return fail("query_failed", error.message);
+
+  let data = bboxRows;
+  if (entityId != null) {
+    const membership = await slugsForEntity(client, entityId);
+    if ("error" in membership) return fail("query_failed", membership.error);
+    data = bboxRows.filter((row) => membership.slugs.has(row.station_slug));
+  }
 
   const stations: MapStation[] = data
     .filter((row) => row.latitude !== null && row.longitude !== null)

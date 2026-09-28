@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Logo } from "@/components/brand/logo";
 import { CategoriesMenu } from "@/components/layout/categories-menu";
@@ -11,6 +14,7 @@ const linkClass =
   "rounded-lg px-2 py-2 text-sm text-muted-strong transition-colors hover:bg-surface-hover hover:text-foreground sm:px-3";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const categories = explorableCategories().map((category) => ({
     href: `/crime-category/${category.key}`,
     label: category.label,
@@ -24,7 +28,7 @@ export function SiteHeader() {
         </Link>
 
         <div className="hidden min-w-0 flex-1 lg:block">
-          <SearchBox size="md" placeholder="Search a station, suburb or town" />
+          <SearchBox size="md" placeholder="Search a suburb, town or police precinct" />
         </div>
 
         <nav aria-label="Main" className="ml-auto flex items-center gap-1">
@@ -45,9 +49,11 @@ export function SiteHeader() {
         </nav>
       </div>
 
-      <div className="border-t border-border px-4 py-3 lg:hidden">
-        <SearchBox size="md" placeholder="Search a station, suburb or town" />
-      </div>
+      {pathname === "/" ? null : (
+        <div className="border-t border-border px-4 py-3 lg:hidden">
+          <SearchBox size="md" placeholder="Search a suburb, town or police precinct" />
+        </div>
+      )}
     </header>
   );
 }

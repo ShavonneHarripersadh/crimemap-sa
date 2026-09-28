@@ -1,106 +1,121 @@
 import Link from "next/link";
 
-import { ChangeIndicator } from "@/components/data/change-indicator";
 import { DataUnavailable } from "@/components/data/data-unavailable";
-import { MapExplorer } from "@/components/map/map-explorer";
 import { SearchBox } from "@/components/search/search-box";
 import { Note } from "@/components/ui/note";
-import {
-  getAvailableFinancialYears,
-  getNationalOverview,
-  getProvinceOverviews,
-} from "@/lib/data/aggregates";
-import { formatCount } from "@/lib/format";
-import { mapCategories } from "@/lib/map/categories";
+import { getProvinceOverviews } from "@/lib/data/aggregates";
 
 export const revalidate = 86_400;
 
 export default async function HomePage() {
-  const [years, overview, provinces] = await Promise.all([
-    getAvailableFinancialYears(),
-    getNationalOverview(),
-    getProvinceOverviews(),
-  ]);
-
-  const latestYear = overview.ok ? overview.data.financialYear : (years.ok ? years.data[0]?.financialYear : null);
+  const provinces = await getProvinceOverviews();
 
   return (
     <div>
       <section className="hero-wash">
-        <div className="mx-auto max-w-7xl px-4 pt-10 pb-6 sm:px-6 lg:px-8">
-          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-            Crime where you live
+        <div className="mx-auto max-w-3xl px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-20">
+          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+            How safe is your area?
           </h1>
-          <p className="mt-3 max-w-xl text-base text-muted sm:text-lg">
-            Search a station, suburb or town. Then read the map.
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+            Search a suburb, town or police precinct and see how reported crime changed in the
+            latest figures the police have published. This is recorded crime, not a safety score
+            and not a prediction.
           </p>
-          <div className="mt-6 max-w-xl">
-            <SearchBox autoFocus placeholder="Hillbrow, Bromhof, Randburg…" />
+          <div className="mt-8">
+            <SearchBox autoFocus placeholder="Search a suburb, town or police precinct" />
           </div>
-          {overview.ok ? (
-            <p className="mt-4 text-sm text-muted">
-              <span className="tabular font-medium text-foreground">
-                {formatCount(overview.data.totalRecordedCrime)}
-              </span>{" "}
-              recorded cases in {overview.data.financialYear}
-              <span className="mx-2 text-border-strong">·</span>
-              <ChangeIndicator change={overview.data.change} size="sm" />
-              <span className="mx-2 text-border-strong">·</span>
-              <Link href="/compare" className="text-accent hover:underline">
-                Compare areas
-              </Link>
-            </p>
-          ) : null}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/map"
+              className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground"
+            >
+              Explore the map
+            </Link>
+            <Link
+              href="/compare"
+              className="inline-flex h-11 items-center rounded-lg border border-border bg-surface-raised px-4 text-sm font-medium"
+            >
+              Compare areas
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {years.ok && years.data.length > 0 ? (
-            <MapExplorer
-              years={years.data.map((year) => year.financialYear)}
-              categories={mapCategories()}
-              initialYear={latestYear ?? years.data[0]?.financialYear ?? null}
-              initialCategory="total_recorded_crime"
-              detail={false}
-            />
-          ) : years.ok ? (
-            <Note>No crime records have been loaded yet, so there is nothing to map.</Note>
-          ) : (
-            <DataUnavailable error={years.error} />
-          )}
-        </div>
-      </section>
+      <div className="mx-auto max-w-3xl space-y-10 px-4 py-12 sm:px-6">
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">What CrimeMap SA is</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">
+            A plain way to read official South African Police Service crime statistics for the
+            place you care about. You do not need to know the precinct name before you start.
+          </p>
+        </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <h2 className="text-sm font-medium tracking-wide text-muted uppercase">Provinces</h2>
-        {provinces.ok && provinces.data.length > 0 ? (
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {provinces.data.map((province) => (
-              <li key={province.slug}>
-                <Link
-                  href={`/crime/${province.slug}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm transition-colors hover:border-border-strong hover:bg-surface-hover"
-                >
-                  {province.name}
-                  <span className="tabular text-muted">{formatCount(province.totalRecordedCrime)}</span>
-                </Link>
-              </li>
-            ))}
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">How the data works</h2>
+          <ul className="mt-3 space-y-3 text-sm leading-relaxed text-muted sm:text-base">
+            <li>
+              Police publish counts for a precinct, which is the area served by one station. A
+              suburb is not that boundary. When you search a suburb, the page is named for the
+              suburb and the figures come from the nearest precinct.
+            </li>
+            <li>
+              Each comparison uses the previous period that actually exists in the dataset. A
+              missing figure stays missing. It is not treated as zero.
+            </li>
+            <li>
+              Counts are not rates. A larger precinct often records more cases because more people
+              live there, not because it has been scored as more dangerous.
+            </li>
           </ul>
-        ) : provinces.ok ? (
-          <Note>No provinces are available until crime records have been loaded.</Note>
-        ) : (
-          <DataUnavailable error={provinces.error} />
-        )}
+        </section>
 
-        <p className="mt-8 max-w-2xl text-sm text-muted">
-          These are crimes recorded by the police, not everything that happened, and not a safety
-          score.{" "}
-          <Link href="/methodology" className="text-accent hover:underline">
-            How the figures work
+        <section className="rounded-xl border border-border bg-surface px-5 py-4">
+          <h2 className="text-sm font-semibold">About this data</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
+            Figures are crimes recorded by the South African Police Service, organised by financial
+            year. Cases that were never reported do not appear.
+          </p>
+          <p className="mt-3 text-sm">
+            <Link href="/methodology" className="font-medium text-accent hover:underline">
+              Read how the figures are calculated
+            </Link>
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Look across the country</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            The map colours municipalities by how many cases were recorded. The colour is that
+            count, not a rating of how safe a place is.
+          </p>
+          <Link
+            href="/map"
+            className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
+          >
+            Open the map
           </Link>
-        </p>
+          {provinces.ok && provinces.data.length > 0 ? (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {provinces.data.map((province) => (
+                <li key={province.slug}>
+                  <Link
+                    href={`/crime/${province.slug}`}
+                    className="inline-flex rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm hover:border-border-strong"
+                  >
+                    {province.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : provinces.ok ? (
+            <Note className="mt-4">No provinces are available until crime records have been loaded.</Note>
+          ) : (
+            <div className="mt-4">
+              <DataUnavailable error={provinces.error} />
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

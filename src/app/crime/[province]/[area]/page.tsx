@@ -126,19 +126,6 @@ export default async function AreaPage({ params }: RouteParams) {
       </PageHeader>
 
       <StationProfile profile={result.data} nearby={nearbyLinks} />
-
-      <div className="mt-14 rounded-xl border border-border bg-surface/60 p-5">
-        <p className="text-sm font-medium">Compare this area with another</p>
-        <p className="mt-1.5 text-sm text-muted">
-          Put {station.name} side by side with up to two other precincts on the same measures.
-        </p>
-        <Link
-          href={`/compare?areas=${station.slug}`}
-          className="mt-3 inline-block rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm font-medium transition-colors hover:border-border-strong hover:bg-surface-hover"
-        >
-          Open the comparison
-        </Link>
-      </div>
     </div>
   );
 }

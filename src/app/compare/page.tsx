@@ -11,9 +11,9 @@ import { getStationProfilesBySlugs } from "@/lib/data/stations";
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Compare recorded crime across police stations",
+  title: "Compare recorded crime",
   description:
-    "Put two or three South African police station precincts side by side on the same recorded-crime measures. CrimeMap SA does not rank areas.",
+    "Put two or three areas side by side using the police precinct figures that cover them. CrimeMap SA does not rank areas or name a safer place.",
   alternates: { canonical: "/compare" },
 };
 
@@ -49,7 +49,7 @@ export default async function ComparePage({
         <PageHeader>
           <Eyebrow>Compare</Eyebrow>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Compare police station precincts
+            Compare areas
           </h1>
         </PageHeader>
         <DataUnavailable error={result.error} />
@@ -70,12 +70,12 @@ export default async function ComparePage({
       <PageHeader>
         <Eyebrow>Compare</Eyebrow>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Compare police station precincts
+          Compare areas
         </h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
-          Choose two or three stations to see the same recorded-crime measures side by side.
-          Larger totals usually reflect larger precincts. This is not a ranking and not a safety
-          score.
+          Choose two or three places. Each column is the police precinct that holds the figures,
+          named on the column, because suburbs do not have their own crime counts. Larger totals
+          usually reflect larger precincts. This is not a ranking and not a safety score.
         </p>
       </PageHeader>
 

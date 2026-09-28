@@ -18,7 +18,7 @@ import { trackEvent } from "@/lib/analytics";
  */
 export function SearchBox({
   autoFocus = false,
-  placeholder = "Search a station, suburb, town or municipality",
+  placeholder = "Search a suburb, town or police precinct",
   size = "lg",
   className,
   onSelect,
@@ -148,7 +148,7 @@ export function SearchBox({
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
-          aria-label="Search for a police station, suburb, municipality, district or province"
+          aria-label="Search for a suburb, town, police precinct, municipality or province"
           autoFocus={autoFocus}
           value={query}
           placeholder={placeholder}
@@ -188,14 +188,13 @@ export function SearchBox({
               <li className="px-4 py-3 text-sm text-muted">{error}</li>
             ) : results.length === 0 && !loading ? (
               <li className="px-4 py-3 text-sm text-muted">
-                No police station, municipality or province matches that name. Suburb names are
-                not in the police dataset — if this is a neighbourhood, nearest stations will
-                appear after a moment, or search the station name (for example Randburg).
+                No area, precinct or municipality matches that name yet. If this is a suburb,
+                nearby precincts appear once the place can be located.
               </li>
             ) : (
               results.map((result, index) => (
                 <li
-                  key={`${result.type}-${result.href}-${result.label}`}
+                  key={`${result.type}-${result.entityId ?? "none"}-${result.href}-${result.label}`}
                   id={`${listboxId}-option-${index}`}
                   role="option"
                   aria-selected={index === activeIndex}

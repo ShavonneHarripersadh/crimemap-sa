@@ -21,6 +21,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      dataset_coverage: {
+        Row: {
+          as_of: string | null
+          dataset_key: string
+          entity_id: number
+          id: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          as_of?: string | null
+          dataset_key: string
+          entity_id: number
+          id?: number
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          as_of?: string | null
+          dataset_key?: string
+          entity_id?: number
+          id?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dataset_coverage_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "geo_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_entities: {
+        Row: {
+          centroid_lat: number | null
+          centroid_lng: number | null
+          created_at: string
+          entity_type: string
+          id: number
+          name: string
+          slug: string
+          source: string
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          centroid_lat?: number | null
+          centroid_lng?: number | null
+          created_at?: string
+          entity_type: string
+          id?: number
+          name: string
+          slug: string
+          source: string
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          centroid_lat?: number | null
+          centroid_lng?: number | null
+          created_at?: string
+          entity_type?: string
+          id?: number
+          name?: string
+          slug?: string
+          source?: string
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      geo_relationships: {
+        Row: {
+          created_at: string
+          from_entity_id: number
+          id: number
+          metadata: Json | null
+          relation_type: string
+          source_id: number | null
+          to_entity_id: number
+        }
+        Insert: {
+          created_at?: string
+          from_entity_id: number
+          id?: number
+          metadata?: Json | null
+          relation_type: string
+          source_id?: number | null
+          to_entity_id: number
+        }
+        Update: {
+          created_at?: string
+          from_entity_id?: number
+          id?: number
+          metadata?: Json | null
+          relation_type?: string
+          source_id?: number | null
+          to_entity_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_relationships_from_entity_id_fkey"
+            columns: ["from_entity_id"]
+            isOneToOne: false
+            referencedRelation: "geo_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_relationships_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_relationships_to_entity_id_fkey"
+            columns: ["to_entity_id"]
+            isOneToOne: false
+            referencedRelation: "geo_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crime_records: {
         Row: {
           aggr_robbery: number | null
@@ -291,6 +417,7 @@ export type Database = {
           station_name: string
           station_name_source: string | null
           station_slug: string
+          entity_id: number | null
           updated_at: string
         }
         Insert: {
@@ -307,6 +434,7 @@ export type Database = {
           station_name: string
           station_name_source?: string | null
           station_slug: string
+          entity_id?: number | null
           updated_at?: string
         }
         Update: {
@@ -323,9 +451,18 @@ export type Database = {
           station_name?: string
           station_name_source?: string | null
           station_slug?: string
+          entity_id?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "police_stations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "geo_entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spatial_ref_sys: {
         Row: {
@@ -921,6 +1058,8 @@ export type Database = {
           slug: string
           station_count: number
           station_id: number
+          entity_id: number
+          entity_type: string
         }[]
       }
       stations_nearest: {
@@ -936,6 +1075,8 @@ export type Database = {
           station_id: number
           station_name: string
           station_slug: string
+          entity_id: number
+          entity_type: string
         }[]
       }
       show_limit: { Args: never; Returns: number }

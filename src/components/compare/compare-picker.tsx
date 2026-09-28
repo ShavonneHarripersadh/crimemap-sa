@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { SearchBox } from "@/components/search/search-box";
 import { trackEvent } from "@/lib/analytics";
@@ -19,6 +20,7 @@ const MAX_AREAS = 3;
 export function ComparePicker({ selected }: { selected: readonly CompareSelection[] }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [hint, setHint] = useState<string | null>(null);
 
   function replace(slugs: string[]) {
     const unique = [...new Set(slugs)].slice(0, MAX_AREAS);
@@ -27,10 +29,20 @@ export function ComparePicker({ selected }: { selected: readonly CompareSelectio
   }
 
   function onSelect(result: SearchResult) {
-    if (result.type !== "station" && result.type !== "nearby_station") return;
+    if (result.type === "place") {
+      setHint(
+        `${result.label} does not have its own crime count. Pick the nearby precinct listed under that area. Each column will name the precinct being compared.`,
+      );
+      return;
+    }
+    if (result.type !== "station" && result.type !== "nearby_station") {
+      setHint("Comparison uses police-precinct figures. Choose a precinct, or a nearby precinct for a suburb.");
+      return;
+    }
     const slug = result.href.split("/").filter(Boolean).at(-1);
     if (!slug) return;
     if (selected.some((item) => item.slug === slug)) return;
+    setHint(null);
     trackEvent("comparison_area_added", { count: selected.length + 1 });
     replace([...selected.map((item) => item.slug), slug]);
   }
@@ -42,14 +54,14 @@ export function ComparePicker({ selected }: { selected: readonly CompareSelectio
           size="lg"
           placeholder={
             selected.length === 0
-              ? "Add a police station to compare"
-              : "Add another police station"
+              ? "Search an area or police precinct"
+              : "Add another area or precinct"
           }
           onSelect={onSelect}
         />
       ) : (
         <p className="text-sm text-muted">
-          Three precincts is the maximum. Remove one to add a different station.
+          Three precincts is the maximum. Remove one to add a different area.
         </p>
       )}
 
@@ -63,6 +75,7 @@ export function ComparePicker({ selected }: { selected: readonly CompareSelectio
               <Link href={item.href} className="font-medium hover:text-accent">
                 {item.name}
               </Link>
+              <span className="text-xs text-muted">Precinct</span>
               <button
                 type="button"
                 aria-label={`Remove ${item.name} from the comparison`}
@@ -77,6 +90,8 @@ export function ComparePicker({ selected }: { selected: readonly CompareSelectio
           ))}
         </ul>
       ) : null}
+
+      {hint ? <p className="text-sm leading-relaxed text-muted">{hint}</p> : null}
     </div>
   );
 }

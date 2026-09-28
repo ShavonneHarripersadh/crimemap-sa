@@ -21,16 +21,15 @@ export default async function MapPage() {
   const categories = mapCategories();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="map-page mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <PageHeader>
-        <Eyebrow>Explore geographically</Eyebrow>
+        <Eyebrow>Map</Eyebrow>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
           Recorded crime across South Africa
         </h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
-          Zoomed out, each local municipality is coloured by how many cases were recorded there in
-          the year you choose. Green is fewer cases, red is more. Colour is recorded volume, not a
-          safety score. Zoom in for each police station.
+          The map starts in a simple view of how many cases were recorded. Colour follows that
+          count. It does not mark a place as safe or dangerous. Zoom in for each police station.
         </p>
       </PageHeader>
 

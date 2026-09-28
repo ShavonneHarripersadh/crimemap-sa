@@ -1,5 +1,4 @@
 import { ChangeIndicator } from "@/components/data/change-indicator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Note } from "@/components/ui/note";
 import { formatCount } from "@/lib/format";
 import { CHANGE_HIGHLIGHT_RULES, rankChanges, type CategoryChange } from "@/lib/metrics/change";
@@ -44,55 +43,24 @@ export function WhatsChanging({
     );
   }
 
+  const highlighted = [...decreases, ...increases].sort(
+    (a, b) => Math.abs(b.percentChange ?? 0) - Math.abs(a.percentChange ?? 0),
+  );
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <ChangeList
-        title="Recorded more often"
-        items={increases}
-        emptyText={`No category increased by enough to be reported between ${previousFinancialYear} and ${financialYear}.`}
-      />
-      <ChangeList
-        title="Recorded less often"
-        items={decreases}
-        emptyText={`No category decreased by enough to be reported between ${previousFinancialYear} and ${financialYear}.`}
-      />
-    </div>
+    <ul className="divide-y divide-border rounded-xl border border-border bg-surface-raised">
+      {highlighted.map((item) => (
+        <li key={item.column} className="flex items-center justify-between gap-4 px-4 py-3">
+          <span className="text-sm text-foreground">{item.label}</span>
+          <span className="flex shrink-0 items-baseline gap-3">
+            <span className="tabular hidden text-xs text-muted sm:inline">
+              {formatCount(item.previous)} to {formatCount(item.current)}
+            </span>
+            <ChangeIndicator change={item} size="sm" />
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function ChangeList({
-  title,
-  items,
-  emptyText,
-}: {
-  title: string;
-  items: readonly CategoryChange[];
-  emptyText: string;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {items.length === 0 ? (
-          <p className="text-sm text-muted">{emptyText}</p>
-        ) : (
-          <ol className="divide-y divide-border">
-            {items.map((item) => (
-              <li key={item.column} className="flex items-baseline justify-between gap-3 py-2.5">
-                <span className="text-sm text-foreground">{item.label}</span>
-                <span className="flex shrink-0 items-baseline gap-3">
-                  <span className="tabular text-xs text-muted">
-                    {formatCount(item.previous)} → {formatCount(item.current)}
-                  </span>
-                  <ChangeIndicator change={item} size="sm" />
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardContent>
-    </Card>
-  );
-}

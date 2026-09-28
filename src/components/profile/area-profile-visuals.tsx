@@ -35,8 +35,8 @@ export function AreaProfileVisuals({
         <div className="mb-4">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">Crime profile</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            Types of recorded crime that make up this precinct&apos;s latest-year total. This is a
-            composition of what was recorded, not a judgement of how dangerous the area is.
+            The mix of recorded crime in the latest available year. This describes what was
+            recorded. It is not a judgement of how dangerous the area is.
           </p>
         </div>
         <CrimeFingerprint

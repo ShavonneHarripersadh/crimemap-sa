@@ -26,8 +26,8 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
   if (profiles.length === 0) {
     return (
       <Note>
-        Add two or three police stations to see the same measures side by side. CrimeMap SA does
-        not rank areas.
+        Add two or three areas to see the same measures side by side. Each column is a police
+        precinct. CrimeMap SA does not rank areas or name a safer place.
       </Note>
     );
   }
@@ -86,9 +86,11 @@ export function CompareTable({ profiles }: { profiles: readonly StationProfile[]
                     {profile.station.name}
                   </Link>
                   <p className="mt-1 text-xs font-normal text-muted">
-                    {[profile.station.localMunicipality, profile.station.provinceName]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    Police precinct
+                    {[profile.station.localMunicipality, profile.station.provinceName].filter(Boolean)
+                      .length > 0
+                      ? ` · ${[profile.station.localMunicipality, profile.station.provinceName].filter(Boolean).join(" · ")}`
+                      : ""}
                   </p>
                 </th>
               ))}
