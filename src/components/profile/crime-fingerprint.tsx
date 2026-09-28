@@ -3,8 +3,6 @@
 import Link from "next/link";
 
 import { formatCount } from "@/lib/format";
-import { trackEvent } from "@/lib/analytics";
-import { featuredSeriesKeyForColumn } from "@/lib/crime/taxonomy";
 import type { BreakdownRow } from "@/lib/metrics/profile";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +39,6 @@ export function CrimeFingerprint({
         {rows.map((row) => {
           const width = largest > 0 && row.value !== null ? (row.value / largest) * 100 : 0;
           const selected = selectedColumn === row.column;
-          const seriesKey = featuredSeriesKeyForColumn(row.column);
 
           return (
             <li key={row.column}>
@@ -49,10 +46,6 @@ export function CrimeFingerprint({
                 type="button"
                 onClick={() => {
                   onSelect?.(row.column);
-                  trackEvent("category_selected", {
-                    category: row.column,
-                    series: seriesKey,
-                  });
                 }}
                 className={cn(
                   "grid w-full gap-1 rounded-md px-0 py-1 text-left transition-colors",

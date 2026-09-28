@@ -5,7 +5,9 @@ import type { ReactNode } from "react";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { JsonLd } from "@/components/seo/json-ld";
 import { siteUrl } from "@/lib/env";
+import { websiteJsonLd } from "@/lib/seo";
 import { THEME_BOOTSTRAP } from "@/lib/theme";
 
 import "./globals.css";
@@ -16,21 +18,22 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl("/")),
   title: {
-    default: "CrimeMap SA — South African recorded crime statistics",
+    default: "CrimeMap SA — South African Crime Statistics & Maps",
     template: "%s — CrimeMap SA",
   },
   description:
-    "South African crime statistics from SAPS, by police station, municipality and province. Maps, trends since 2005/06, category breakdowns and area comparisons.",
+    "Recorded South African crime statistics from the South African Police Service, by police precinct. Maps, trends since 2005/06, category breakdowns and area comparisons.",
   applicationName: "CrimeMap SA",
   openGraph: {
     type: "website",
     siteName: "CrimeMap SA",
     locale: "en_ZA",
-    title: "CrimeMap SA — South African recorded crime statistics",
+    url: siteUrl("/"),
+    title: "CrimeMap SA — South African Crime Statistics & Maps",
     description:
-      "Recorded crime statistics from the South African Police Service, presented as maps, trends and comparisons.",
+      "Recorded crime statistics from the South African Police Service, by police precinct. Maps, trends and comparisons. Not an official SAPS service.",
   },
-  twitter: { card: "summary_large_image" },
+  twitter: { card: "summary" },
   robots: { index: true, follow: true },
 };
 
@@ -43,19 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "CrimeMap SA",
-              url: siteUrl("/"),
-              description:
-                "South African recorded crime statistics from the South African Police Service, by police station.",
-            }),
-          }}
-        />
+        <JsonLd data={websiteJsonLd()} />
       </head>
       <body className="flex min-h-full flex-col">
         <a

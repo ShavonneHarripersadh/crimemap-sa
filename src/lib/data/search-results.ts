@@ -157,7 +157,7 @@ export function geocodedPlaceResult(name: string, stationCount: number): SearchR
     typeLabel: TYPE_LABELS.place,
     label: name,
     context: "Suburb or town · figures come from a nearby police precinct",
-    href: `/place/${encodeURIComponent(name)}`,
+    href: `/place/${encodeURIComponent(name.trim().toLowerCase())}`,
     stationCount,
     entityType: null,
     entityId: null,

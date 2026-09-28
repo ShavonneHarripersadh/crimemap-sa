@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { MapExplorer } from "@/components/map/map-explorer";
 import { Note } from "@/components/ui/note";
@@ -10,10 +11,16 @@ import { mapCategories } from "@/lib/map/categories";
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Map of recorded crime by police station",
+  title: { absolute: "South African Crime Map | CrimeMap SA" },
   description:
-    "An interactive map of recorded crime for every South African police station precinct, filterable by financial year and crime category.",
+    "Map of recorded crime for South African police station precincts, by financial year and crime category. Colour shows the count, not a safety rating.",
   alternates: { canonical: "/map" },
+  openGraph: {
+    title: "South African Crime Map | CrimeMap SA",
+    description:
+      "Recorded crime for South African police station precincts, by financial year and crime category.",
+    url: "/map",
+  },
 };
 
 export default async function MapPage() {
@@ -22,6 +29,7 @@ export default async function MapPage() {
 
   return (
     <div className="map-page mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <TrackOnMount event="map_viewed" />
       <PageHeader>
         <Eyebrow>Map</Eyebrow>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">

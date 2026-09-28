@@ -1,11 +1,26 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { SearchBox } from "@/components/search/search-box";
 import { Note } from "@/components/ui/note";
 import { getProvinceOverviews } from "@/lib/data/aggregates";
+import { explorableCategories } from "@/lib/crime/taxonomy";
 
 export const revalidate = 86_400;
+
+export const metadata: Metadata = {
+  title: { absolute: "CrimeMap SA — South African Crime Statistics & Maps" },
+  description:
+    "Look up recorded South African crime statistics by suburb, town or police precinct. Maps and trends use SAPS precinct figures. CrimeMap SA is not an official SAPS service and does not score how safe a place is.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "CrimeMap SA — South African Crime Statistics & Maps",
+    description:
+      "Recorded South African crime statistics by police precinct, with maps, trends and comparisons.",
+    url: "/",
+  },
+};
 
 export default async function HomePage() {
   const provinces = await getProvinceOverviews();
@@ -115,6 +130,26 @@ export default async function HomePage() {
               <DataUnavailable error={provinces.error} />
             </div>
           )}
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Crime categories</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            National recorded counts for each category CrimeMap SA publishes, from the same SAPS
+            station records.
+          </p>
+          <ul className="mt-5 flex flex-wrap gap-2">
+            {explorableCategories().map((category) => (
+              <li key={category.key}>
+                <Link
+                  href={`/crime-category/${category.key}`}
+                  className="inline-flex rounded-full border border-border bg-surface-raised px-3 py-1.5 text-sm hover:border-border-strong"
+                >
+                  {category.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
     </div>

@@ -7,10 +7,16 @@ import { explorableCategories } from "@/lib/crime/taxonomy";
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Crime categories in South Africa",
+  title: { absolute: "Crime Categories in South Africa | CrimeMap SA" },
   description:
-    "Explore recorded crime in South Africa by category: national trends, provincial breakdowns and historical highs and lows from SAPS station records.",
+    "National recorded crime statistics by category, from South African Police Service station records. Trends, provincial breakdowns and historical highs and lows.",
   alternates: { canonical: "/crime-category" },
+  openGraph: {
+    title: "Crime Categories in South Africa | CrimeMap SA",
+    description:
+      "National recorded crime statistics by category, from South African Police Service station records.",
+    url: "/crime-category",
+  },
 };
 
 export default function CrimeCategoryIndexPage() {

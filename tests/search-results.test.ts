@@ -128,7 +128,7 @@ describe("geocoded places", () => {
     expect(result.type).toBe("place");
     expect(result.entityType).toBeNull();
     expect(result.entityId).toBeNull();
-    expect(result.href).toBe("/place/Sandton");
+    expect(result.href).toBe("/place/sandton");
     expect(result.stationCount).toBe(4);
     expect(result.label).toBe("Sandton");
   });

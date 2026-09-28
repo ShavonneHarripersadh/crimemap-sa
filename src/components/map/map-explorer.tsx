@@ -67,8 +67,13 @@ export function MapExplorer({
           <select
             value={year ?? ""}
             onChange={(event) => {
-              setYear(event.target.value);
-              trackEvent("map_year_changed", { year: event.target.value });
+              const nextYear = event.target.value;
+              setYear(nextYear);
+              trackEvent("map_filter_changed", {
+                period: nextYear,
+                category,
+                analysis_mode: metric,
+              });
             }}
             className="h-11 min-w-36 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
           >
@@ -87,8 +92,13 @@ export function MapExplorer({
           <select
             value={category}
             onChange={(event) => {
-              setCategory(event.target.value);
-              trackEvent("map_category_changed", { category: event.target.value });
+              const nextCategory = event.target.value;
+              setCategory(nextCategory);
+              trackEvent("map_filter_changed", {
+                period: year,
+                category: nextCategory,
+                analysis_mode: metric,
+              });
             }}
             className="h-11 min-w-56 rounded-lg border border-border bg-surface px-3 text-sm text-foreground"
           >
@@ -124,7 +134,11 @@ export function MapExplorer({
                 aria-pressed={metric === option.value}
                 onClick={() => {
                   setMetric(option.value);
-                  trackEvent("map_metric_changed", { metric: option.value });
+                  trackEvent("map_filter_changed", {
+                    period: year,
+                    category,
+                    analysis_mode: option.value,
+                  });
                 }}
                 className={
                   metric === option.value

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { SearchResult } from "@/lib/data/search";
 import { cn } from "@/lib/utils";
-import { trackEvent } from "@/lib/analytics";
+import { searchSelectionProperties, trackEvent, unmatchedSearchProperties } from "@/lib/analytics";
 
 /**
  * Autocomplete over stations, municipalities, districts and provinces.
@@ -71,9 +71,13 @@ export function SearchBox({
         }
 
         setError(null);
-        setResults(body.results ?? []);
+        const next = body.results ?? [];
+        setResults(next);
         setActiveIndex(-1);
-        trackEvent("search_performed", { characters: trimmed.length });
+        if (next.length === 0) {
+          const properties = unmatchedSearchProperties(trimmed);
+          if (properties) trackEvent("search_performed", properties);
+        }
       } catch (cause) {
         if (cause instanceof DOMException && cause.name === "AbortError") return;
         setError("Search could not be completed. Please try again.");
@@ -90,7 +94,7 @@ export function SearchBox({
 
   const select = useCallback(
     (result: SearchResult) => {
-      trackEvent("search_result_selected", { type: result.type });
+      trackEvent("search_performed", searchSelectionProperties(result));
       setOpen(false);
       setQuery("");
       if (onSelect) {

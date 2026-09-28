@@ -3,7 +3,6 @@
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { trackEvent } from "@/lib/analytics";
 import { applyTheme, readStoredTheme, type Theme } from "@/lib/theme";
 
 /**
@@ -26,7 +25,6 @@ export function ThemeToggle() {
       onClick={() => {
         setTheme(next);
         applyTheme(next);
-        trackEvent("theme_changed", { theme: next });
       }}
     >
       {theme === "dark" ? <Sun className="size-4" aria-hidden /> : <Moon className="size-4" aria-hidden />}

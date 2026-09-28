@@ -6,8 +6,10 @@ import { ChangeIndicator } from "@/components/data/change-indicator";
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { Note } from "@/components/ui/note";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getProvinceOverviews, getProvinceStations } from "@/lib/data/aggregates";
 import { formatCount } from "@/lib/format";
+import { breadcrumbList, pageTitle } from "@/lib/seo";
 
 export const revalidate = 86_400;
 
@@ -22,12 +24,21 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
     ? overviews.data.find((item) => item.slug === province)
     : undefined;
 
+  if (!match) {
+    return {
+      title: "Province not found",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = pageTitle(`${match.name} Crime Statistics`);
+  const description = `${formatCount(match.totalRecordedCrime)} crimes recorded at police stations in ${match.name} in ${match.financialYear}, across ${match.stationsReporting} of ${match.stationsTotal} stations. Listed by precinct, not ranked.`;
+
   return {
-    title: match ? `${match.name} recorded crime` : "Province not found",
-    description: match
-      ? `Recorded crime at police stations in ${match.name}.`
-      : "Province not found.",
+    title: { absolute: title },
+    description,
     alternates: { canonical: `/crime/${province}` },
+    openGraph: { title, description, url: `/crime/${province}` },
   };
 }
 
@@ -59,6 +70,12 @@ export default async function ProvincePage({ params }: RouteParams) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      <JsonLd
+        data={breadcrumbList([
+          { name: "Home", path: "/" },
+          { name: overview.name, path: `/crime/${overview.slug}` },
+        ])}
+      />
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
@@ -78,6 +95,19 @@ export default async function ProvincePage({ params }: RouteParams) {
           {formatCount(overview.totalRecordedCrime)} recorded crimes in {overview.financialYear}{" "}
           across {overview.stationsReporting} of {overview.stationsTotal} stations. Listed
           alphabetically — this is not a ranking.
+        </p>
+        <p className="mt-3 text-sm text-muted">
+          <Link href="/crime-category" className="font-medium text-accent hover:underline">
+            Crime categories
+          </Link>
+          <span aria-hidden> · </span>
+          <Link href="/map" className="font-medium text-accent hover:underline">
+            National map
+          </Link>
+          <span aria-hidden> · </span>
+          <Link href="/methodology" className="font-medium text-accent hover:underline">
+            Methodology
+          </Link>
         </p>
       </PageHeader>
 

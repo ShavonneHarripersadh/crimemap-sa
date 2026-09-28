@@ -9,7 +9,8 @@ export function SiteFooter() {
         <div className="max-w-md">
           <Logo />
           <p className="mt-3 text-sm text-muted">
-            Recorded SAPS crime for the precinct that covers a place. Not a safety score.
+            Recorded SAPS crime for the nearest police precinct. Not a suburb boundary and not a
+            safety score.
           </p>
         </div>
 

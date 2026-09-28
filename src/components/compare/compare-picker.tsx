@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { SearchBox } from "@/components/search/search-box";
-import { trackEvent } from "@/lib/analytics";
 import type { SearchResult } from "@/lib/data/search";
 
 export interface CompareSelection {
@@ -43,7 +42,6 @@ export function ComparePicker({ selected }: { selected: readonly CompareSelectio
     if (!slug) return;
     if (selected.some((item) => item.slug === slug)) return;
     setHint(null);
-    trackEvent("comparison_area_added", { count: selected.length + 1 });
     replace([...selected.map((item) => item.slug), slug]);
   }
 

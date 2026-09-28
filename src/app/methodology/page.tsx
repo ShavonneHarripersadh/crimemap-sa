@@ -1,25 +1,44 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { JsonLd } from "@/components/seo/json-ld";
 import { Note } from "@/components/ui/note";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
-import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { FINANCIAL_YEAR_EXPLANATION } from "@/lib/crime/financial-year";
 import { HEADLINE_COMMUNITY_COLUMNS, POLICE_ACTION_COLUMNS } from "@/lib/crime/taxonomy";
 import { CHANGE_HIGHLIGHT_RULES, LOW_BASE_THRESHOLD } from "@/lib/metrics/change";
-import { SOURCE_PRODUCER } from "@/lib/source";
+import { siteUrl } from "@/lib/env";
+import { SOURCE_CITATION, SOURCE_COVERAGE, SOURCE_PRODUCER, SOURCE_TITLE } from "@/lib/source";
 
 export const metadata: Metadata = {
-  title: "Methodology and calculations",
+  title: { absolute: "Crime Statistics Methodology | CrimeMap SA" },
   description:
     "How CrimeMap SA turns South African Police Service annual crime records into totals, year-on-year change and maps, without inventing values or converting financial years.",
   alternates: { canonical: "/methodology" },
+  openGraph: {
+    title: "Crime Statistics Methodology | CrimeMap SA",
+    description:
+      "How recorded SAPS crime counts become the totals, changes and maps on CrimeMap SA.",
+    url: "/methodology",
+  },
 };
 
 export default function MethodologyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <TrackOnMount event="methodology_opened" />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: SOURCE_TITLE,
+          description:
+            "Annual recorded crime counts for South African police station precincts, as presented by CrimeMap SA. CrimeMap SA is not the producer and is not an official SAPS service.",
+          url: siteUrl("/methodology"),
+          creator: { "@type": "Organization", name: SOURCE_PRODUCER },
+          temporalCoverage: SOURCE_COVERAGE,
+          citation: SOURCE_CITATION,
+        }}
+      />
       <PageHeader>
         <Eyebrow>Methodology</Eyebrow>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -104,7 +123,15 @@ export default function MethodologyPage() {
             dataset. Suburb names such as Bromhof are not in that file. When a search matches no
             source name, CrimeMap SA looks the place up geographically and offers the nearest
             stations. That is a distance hint, not an official statement of which precinct a
-            suburb falls in.
+            suburb falls in.{" "}
+            <Link href="/map" className="font-medium text-accent hover:underline">
+              Open the map
+            </Link>{" "}
+            or{" "}
+            <Link href="/crime-category" className="font-medium text-accent hover:underline">
+              browse crime categories
+            </Link>
+            .
           </p>
         </section>
 

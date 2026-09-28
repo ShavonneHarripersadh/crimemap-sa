@@ -346,7 +346,9 @@ export function StationHeader({ profile }: { profile: StationProfileData }) {
   return (
     <div>
       <Eyebrow>Police precinct</Eyebrow>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{station.name}</h1>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        {station.name} police precinct
+      </h1>
       <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
         {[station.localMunicipality, station.districtMunicipality, station.provinceName]
           .filter(Boolean)

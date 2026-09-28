@@ -18,7 +18,6 @@ import { formatCompactCount, formatCount, formatPercent } from "@/lib/format";
 import type { MapStation } from "@/lib/data/map";
 import type { SearchResult } from "@/lib/data/search";
 import { calculateChange } from "@/lib/metrics/change";
-import { trackEvent } from "@/lib/analytics";
 import {
   aggregateByMunicipality,
   aggregateMunicipalityChange,
@@ -402,8 +401,6 @@ export function CrimeMapView({
       map.invalidateSize();
       setActiveProvince(slug);
       setSelected(null);
-      trackEvent("map_province_jumped", { province: slug });
-
       const matches = atlasRef.current.filter((station) => station.provinceSlug === slug);
       if (matches.length > 0) {
         fitToStations(matches, 8);
@@ -422,7 +419,6 @@ export function CrimeMapView({
   );
 
   const openStation = useCallback((station: MapStation) => {
-    trackEvent("map_station_opened", { category: filtersRef.current.category });
     setSelected(station);
     overlayLayerRef.current?.setSelectedSlug(station.slug);
     const map = mapRef.current;

@@ -6,10 +6,16 @@ import { Eyebrow, PageHeader } from "@/components/ui/section";
 import { SOURCE_COVERAGE, SOURCE_PRODUCER, SOURCE_UNIT_OF_OBSERVATION } from "@/lib/source";
 
 export const metadata: Metadata = {
-  title: "About CrimeMap SA",
+  title: { absolute: "About CrimeMap SA" },
   description:
-    "CrimeMap SA presents recorded crime statistics published by the South African Police Service. It does not assess safety, predict crime or rank places.",
+    "CrimeMap SA presents recorded crime statistics published by the South African Police Service. It is independent of SAPS. It does not assess safety, predict crime or rank places.",
   alternates: { canonical: "/about" },
+  openGraph: {
+    title: "About CrimeMap SA",
+    description:
+      "An independent presentation of recorded SAPS crime statistics by police precinct.",
+    url: "/about",
+  },
 };
 
 export default function AboutPage() {

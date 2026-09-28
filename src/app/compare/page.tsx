@@ -11,10 +11,16 @@ import { getStationProfilesBySlugs } from "@/lib/data/stations";
 export const revalidate = 86_400;
 
 export const metadata: Metadata = {
-  title: "Compare recorded crime",
+  title: { absolute: "Compare Crime Statistics | CrimeMap SA" },
   description:
-    "Put two or three areas side by side using the police precinct figures that cover them. CrimeMap SA does not rank areas or name a safer place.",
+    "Compare recorded crime for two or three South African police precincts. CrimeMap SA does not rank areas or name a safer place.",
   alternates: { canonical: "/compare" },
+  openGraph: {
+    title: "Compare Crime Statistics | CrimeMap SA",
+    description:
+      "Compare recorded crime for two or three South African police precincts side by side.",
+    url: "/compare",
+  },
 };
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -81,7 +87,17 @@ export default async function ComparePage({
 
       <ComparePicker selected={selected} />
 
-      {result.data.length >= 2 ? <TrackOnMount event="comparison_viewed" /> : null}
+      {result.data.length >= 2 ? (
+        <TrackOnMount
+          event="comparison_viewed"
+          properties={{
+            comparison_type: "precinct",
+            entity_a: result.data[0]?.station.slug ?? null,
+            entity_b: result.data[1]?.station.slug ?? null,
+            entity_c: result.data[2]?.station.slug ?? null,
+          }}
+        />
+      ) : null}
 
       <div className="mt-8">
         <CompareTable profiles={result.data} />

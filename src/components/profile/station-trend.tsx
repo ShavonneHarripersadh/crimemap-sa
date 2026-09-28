@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 
 import { TrendChart } from "@/components/charts/trend-chart";
 import { Card } from "@/components/ui/card";
-import { trackEvent } from "@/lib/analytics";
 import { TREND_WINDOWS, trendWindowLength, type TrendWindow } from "@/lib/crime/financial-year";
 import { FEATURED_SERIES } from "@/lib/crime/taxonomy";
 import { buildSeries, type StationYearRecord } from "@/lib/metrics/profile";
@@ -54,7 +53,6 @@ export function StationTrend({
               const next = event.target.value;
               onSeriesKeyChange?.(next);
               if (!onSeriesKeyChange) setUncontrolledKey(next);
-              trackEvent("trend_category_changed", { category: next });
             }}
             className="h-10 min-w-52 rounded-lg border border-border bg-surface px-3 text-sm"
           >
@@ -78,7 +76,6 @@ export function StationTrend({
               aria-pressed={window === option.value}
               onClick={() => {
                 setWindow(option.value);
-                trackEvent("trend_window_changed", { window: option.value });
               }}
               className={cn(
                 "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",

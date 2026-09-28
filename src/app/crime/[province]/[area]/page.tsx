@@ -4,7 +4,10 @@ import { notFound, redirect } from "next/navigation";
 
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { StationHeader, StationProfile } from "@/components/profile/station-profile";
+import { JsonLd } from "@/components/seo/json-ld";
 import { PageHeader } from "@/components/ui/section";
+import { explorableCategories } from "@/lib/crime/taxonomy";
+import { breadcrumbList, pageTitle } from "@/lib/seo";
 import { getNearbyStations, getStationProfileBySlug } from "@/lib/data/stations";
 import {
   buildHistoricalContext,
@@ -24,7 +27,7 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   const result = await getStationProfileBySlug(area);
 
   if (!result.ok) {
-    return { title: "Area not found" };
+    return { title: "Area not found", robots: { index: false, follow: false } };
   }
 
   const { station, records } = result.data;
@@ -42,16 +45,17 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
           ? ` Compared with the five-year average, the latest figure is ${historical.vsFiveYear.percentChange > 0 ? "above" : "below"} that average.`
           : "";
 
+  const canonical = `/crime/${station.provinceSlug ?? province}/${station.slug}`;
+  const title = pageTitle(`${station.name} Crime Statistics & Trends`);
+  const description = latest
+    ? `${formatCount(total)} crimes recorded in the ${station.name} police precinct${where ? ` in ${where}` : ""} in ${latest.financialYear}.${historyClause} These are precinct figures, not suburb incident counts.`
+    : `Recorded crime statistics and historical trends for the ${station.name} police precinct.`;
+
   return {
-    title: `${station.name} crime statistics`,
-    description: latest
-      ? `${formatCount(total)} recorded crimes in the ${station.name} police precinct${where ? ` in ${where}` : ""} in ${latest.financialYear}.${historyClause} Explore ${station.name} crime trends and reported crime ${latest.financialYear}.`
-      : `Recorded crime statistics and historical trends for the ${station.name} police precinct.`,
-    alternates: { canonical: `/crime/${province}/${area}` },
-    openGraph: {
-      title: `${station.name} crime statistics`,
-      description: `Recorded crime in the ${station.name} police precinct${where ? `, ${where}` : ""}.`,
-    },
+    title: { absolute: title },
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical },
   };
 }
 
@@ -95,8 +99,18 @@ export default async function AreaPage({ params }: RouteParams) {
         }))
       : [];
 
+  const canonicalPath = `/crime/${station.provinceSlug ?? province}/${station.slug}`;
+  const crumbs = [
+    { name: "Home", path: "/" },
+    ...(station.provinceSlug && station.provinceName
+      ? [{ name: station.provinceName, path: `/crime/${station.provinceSlug}` }]
+      : []),
+    { name: `${station.name} police precinct`, path: canonicalPath },
+  ];
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+      <JsonLd data={breadcrumbList(crumbs)} />
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
@@ -123,6 +137,27 @@ export default async function AreaPage({ params }: RouteParams) {
 
       <PageHeader>
         <StationHeader profile={result.data} />
+        <p className="mt-4 text-sm text-muted">
+          <Link href="/crime-category" className="font-medium text-accent hover:underline">
+            Crime categories
+          </Link>
+          <span aria-hidden> · </span>
+          <Link href="/methodology" className="font-medium text-accent hover:underline">
+            How these figures are calculated
+          </Link>
+        </p>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {explorableCategories().map((category) => (
+            <li key={category.key}>
+              <Link
+                href={`/crime-category/${category.key}`}
+                className="inline-flex rounded-full border border-border bg-surface-raised px-3 py-1 text-sm hover:border-border-strong"
+              >
+                {category.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </PageHeader>
 
       <StationProfile profile={result.data} nearby={nearbyLinks} />

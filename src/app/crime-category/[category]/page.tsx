@@ -6,7 +6,9 @@ import { CategoryExplorer } from "@/components/category/category-explorer";
 import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { DataUnavailable } from "@/components/data/data-unavailable";
 import { Eyebrow, PageHeader } from "@/components/ui/section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { TOTAL_SERIES_TOKEN, explorableCategories, getExplorableCategory } from "@/lib/crime/taxonomy";
+import { breadcrumbList, pageTitle } from "@/lib/seo";
 import {
   getAvailableFinancialYears,
   getNationalSeriesTrend,
@@ -35,10 +37,13 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   const category = getExplorableCategory(slug);
   if (!category) return { title: "Category not found" };
 
+  const title = pageTitle(`${category.label} Crime Statistics South Africa`);
+  const description = `National recorded ${category.label.toLowerCase()} statistics for South Africa, with provincial breakdowns and historical highs and lows from South African Police Service station records.`;
   return {
-    title: `${category.label} in South Africa`,
-    description: `National recorded ${category.label.toLowerCase()} statistics, provincial breakdowns and historical highs and lows from South African Police Service station records.`,
+    title: { absolute: title },
+    description,
     alternates: { canonical: `/crime-category/${slug}` },
+    openGraph: { title, description, url: `/crime-category/${slug}` },
   };
 }
 
@@ -94,7 +99,14 @@ export default async function CrimeCategoryPage({ params, searchParams }: RouteP
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-      <TrackOnMount event="category_deep_dive_opened" properties={{ category: slug }} />
+      <JsonLd
+        data={breadcrumbList([
+          { name: "Home", path: "/" },
+          { name: "Crime categories", path: "/crime-category" },
+          { name: category.label, path: `/crime-category/${slug}` },
+        ])}
+      />
+      <TrackOnMount event="crime_category_viewed" properties={{ category: slug }} />
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
         <ol className="flex flex-wrap items-center gap-2">
           <li>

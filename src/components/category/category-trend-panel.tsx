@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { TrendChart } from "@/components/charts/trend-chart";
-import { trackEvent } from "@/lib/analytics";
 import { TREND_WINDOWS, trendWindowLength, type TrendWindow } from "@/lib/crime/financial-year";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +58,6 @@ export function CategoryTrendPanel({
             value={selectedYear ?? ""}
             onChange={(event) => {
               replace({ year: event.target.value });
-              trackEvent("category_year_changed", { year: event.target.value });
             }}
             className="h-10 min-w-36 rounded-lg border border-border bg-surface px-3 text-sm"
           >
@@ -78,7 +76,6 @@ export function CategoryTrendPanel({
             onChange={(event) => {
               const value = event.target.value || null;
               replace({ province: value });
-              trackEvent("category_province_changed", { province: value ?? "all" });
             }}
             className="h-10 min-w-44 rounded-lg border border-border bg-surface px-3 text-sm"
           >
@@ -98,8 +95,7 @@ export function CategoryTrendPanel({
               type="button"
               aria-pressed={window === option.value}
               onClick={() => {
-                setWindow(option.value);
-                trackEvent("trend_window_changed", { window: option.value });
+                    setWindow(option.value);
               }}
               className={cn(
                 "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",

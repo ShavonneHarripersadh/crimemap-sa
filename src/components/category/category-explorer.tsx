@@ -12,7 +12,6 @@ import { HistoricalContextTable } from "@/components/profile/historical-context"
 import { UnusualMovements } from "@/components/profile/unusual-movements";
 import { Note } from "@/components/ui/note";
 import { Section } from "@/components/ui/section";
-import { trackEvent } from "@/lib/analytics";
 import { TREND_WINDOWS, trendWindowLength, type TrendWindow } from "@/lib/crime/financial-year";
 import { formatCount } from "@/lib/format";
 import { calculateChange, rankChanges, type Change } from "@/lib/metrics/change";
@@ -214,7 +213,6 @@ export function CategoryExplorer({
                 value={year ?? ""}
                 onChange={(event) => {
                   setYear(event.target.value);
-                  trackEvent("category_year_changed", { year: event.target.value });
                 }}
                 className="h-10 min-w-36 rounded-lg border border-border bg-surface px-3 text-sm"
               >
@@ -233,7 +231,6 @@ export function CategoryExplorer({
                 onChange={(event) => {
                   const value = event.target.value || null;
                   setProvince(value);
-                  trackEvent("category_province_changed", { province: value ?? "all" });
                 }}
                 className="h-10 min-w-44 rounded-lg border border-border bg-surface px-3 text-sm"
               >
@@ -258,7 +255,6 @@ export function CategoryExplorer({
                   aria-pressed={window === option.value}
                   onClick={() => {
                     setWindow(option.value);
-                    trackEvent("trend_window_changed", { window: option.value });
                   }}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
@@ -340,16 +336,9 @@ export function CategoryExplorer({
                   }
                 >
                   <td className="py-3 pr-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProvince(row.slug);
-                        trackEvent("category_province_changed", { province: row.slug });
-                      }}
-                      className="text-left hover:text-accent"
-                    >
+                    <Link href={`/crime/${row.slug}`} className="font-medium hover:text-accent">
                       {row.name}
-                    </button>
+                    </Link>
                   </td>
                   <td className="tabular py-3 pr-4">{formatCount(row.totalRecordedCrime)}</td>
                   <td className="py-3">

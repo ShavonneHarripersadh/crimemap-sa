@@ -38,6 +38,11 @@ yarn-error.log*
 /data/raw/*
 !/data/raw/.gitkeep
 
+# Official SAPS workbooks downloaded for the quarterly audit. Large binaries.
+# URLs: research/quarterly/sources/manifest.txt
+# SHA-256: research/quarterly/sources/checksums.sha256
+/research/quarterly/sources/files/*
+
 # pipeline output
 /data/output/*
 !/data/output/.gitkeep
